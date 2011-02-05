@@ -20,8 +20,11 @@ type NodeReader interface {
 	Close()
 }
 
+const kinds = "df-u"
+
 // Show the entire tree.
 func show(nodes NodeReader) {
+	depth := 0
 	for {
 		node, err := nodes.ReadNode()
 		if err == os.EOF {
@@ -31,7 +34,13 @@ func show(nodes NodeReader) {
 			fmt.Printf("error: %s\n", err)
 			os.Exit(1)
 		}
-		fmt.Printf("Node %d, %s, %v\n", node.GetKind(), node.GetName(), node.GetAtts())
+		if node.GetKind() == LEAVE {
+			depth -= 2
+		}
+		fmt.Printf("%*c %s %s\n", depth, kinds[node.GetKind()], node.GetName(), node.GetAtts())
+		if node.GetKind() == ENTER {
+			depth += 2
+		}
 	}
 }
 
