@@ -74,6 +74,24 @@ func parseArgs() {
 		defer nodes.Close()
 
 		show(nodes)
+
+	case "check":
+		sf, err := surefile(*surefileArg)
+		if err != nil {
+			fmt.Printf("error: %s\n", err)
+			os.Exit(1)
+		}
+		defer sf.Close()
+
+		curtree, err := walkTree(".")
+		if err != nil {
+			fmt.Printf("error: %s\n", err)
+			os.Exit(1)
+		}
+		defer curtree.Close()
+
+		compareTrees(sf, curtree)
+
 	default:
 		usage(fmt.Sprintf("Unknown command: '%s'", flag.Arg(0)))
 	}

@@ -48,7 +48,7 @@ type VerySimpleNode struct {
 }
 
 var theMark = VerySimpleNode {MARK}
-var theLeave = VerySimpleNode {MARK}
+var theLeave = VerySimpleNode {LEAVE}
 
 func (n *VerySimpleNode) GetKind() int { return n.kind }
 func (n *VerySimpleNode) GetName() string { return "" }
@@ -70,8 +70,17 @@ func (r *sureReader) Close() {
 	r.cleanup()
 }
 
+// Read a delimited string from the stream, and return a slice without the delimiter.
+func readButLast(buf *bufio.Reader, delim byte) (line string, err os.Error) {
+	line, err = buf.ReadString(delim)
+	if err == nil && len(line) > 0 {
+		line = line[0:len(line)-1]
+	}
+	return
+}
+
 func (r *sureReader) readFull(kind int) (Node, os.Error) {
-	name, err := r.file.ReadString(' ')
+	name, err := readButLast(r.file, ' ')
 	if err != nil {
 		goto error
 	}
@@ -88,12 +97,12 @@ func (r *sureReader) readFull(kind int) (Node, os.Error) {
 		if start == ']' {
 			break
 		}
-		key, err := r.file.ReadString(' ')
+		key, err := readButLast(r.file, ' ')
 		if err != nil {
 			goto error
 		}
 		key = string(start) + key
-		val, err := r.file.ReadString(' ')
+		val, err := readButLast(r.file, ' ')
 		if err != nil {
 			goto error
 		}

@@ -105,14 +105,14 @@ func makeMarkNode(name string) *MarkNode {
 	return &MarkNode{BasicNode{MARK, name}}
 }
 
-func makeEnterNode(path string, info *os.FileInfo) *EnterNode {
+func makeEnterNode(path, name string, info *os.FileInfo) *EnterNode {
 	atts := make(map[string]string)
 	atts["kind"] = "dir"
 	atts["uid"] = strconv.Itoa(info.Uid)
 	atts["gid"] = strconv.Itoa(info.Gid)
 	atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
 	return &EnterNode{path: path, atts: atts,
-		BasicNode: BasicNode{ENTER, info.Name}}
+		BasicNode: BasicNode{ENTER, name}}
 }
 
 func makeFileNode(path string, info *os.FileInfo) Node {
@@ -218,7 +218,7 @@ func (r *walkReader) insertDir(enter *EnterNode) os.Error {
 	}
 	r.nodes.PushFront(makeMarkNode(enter.name))
 	for _, node := range dirs {
-		r.nodes.PushFront(makeEnterNode(enter.path + "/" + node.Name, node))
+		r.nodes.PushFront(makeEnterNode(enter.path + "/" + node.Name, node.Name, node))
 	}
 
 	return nil
@@ -256,7 +256,7 @@ func walkTree(base string) (NodeReader, os.Error) {
 	}
 
 	nodes := list.New()
-	nodes.PushBack(makeEnterNode(base, info))
+	nodes.PushBack(makeEnterNode(base, "__root__", info))
 	return &walkReader{nodes}, nil
 
 error:
