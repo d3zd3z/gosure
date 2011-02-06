@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 )
 
 // Lazily evaluated stream of nodes.
@@ -186,7 +187,7 @@ type ListCompare struct {
 
 func niceName(name string, node Node) string {
 	name = name + "/" + node.GetName()
-	if len(name) > 10 && name[:10] == "/__root__/" {
+	if strings.HasPrefix(name, "/__root__/") {
 		return name[10:]
 	}
 	return name

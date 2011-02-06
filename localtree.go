@@ -8,6 +8,7 @@ import (
 	"os"
 	"container/list"
 	"crypto/sha1"
+	"strings"
 	"syscall"
 )
 
@@ -202,6 +203,7 @@ func (r *walkReader) insertDir(enter *EnterNode) os.Error {
 	files := make([]*os.FileInfo, 0, len(children))
 	for i, _ := range children {
 		child := &children[i]
+		if strings.HasPrefix(child.Name, "2sure.") { continue }
 		if child.IsDirectory() {
 			dirs = append(dirs, child)
 		} else {
