@@ -4,8 +4,8 @@ package main
 
 import (
 	"sort"
+	"strconv"
 	"os"
-	// "fmt"
 	"container/list"
 )
 
@@ -42,6 +42,8 @@ type FileNode struct {
 	atts map[string]string
 }
 
+func (n *FileNode) GetAtts() map[string]string { return n.atts }
+
 func (n *EnterNode) GetAtts() map[string]string { return n.atts }
 
 func makeLeaveNode(name string) *LeaveNode {
@@ -53,12 +55,64 @@ func makeMarkNode(name string) *MarkNode {
 }
 
 func makeEnterNode(path string, info *os.FileInfo) *EnterNode {
-	return &EnterNode{path: path, atts: make(map[string]string),
+	atts := make(map[string]string)
+	atts["kind"] = "dir"
+	atts["uid"] = strconv.Itoa(info.Uid)
+	atts["gid"] = strconv.Itoa(info.Gid)
+	atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+	return &EnterNode{path: path, atts: atts,
 		BasicNode: BasicNode{ENTER, info.Name}}
 }
 
 func makeFileNode(path string, info *os.FileInfo) *FileNode {
-	return &FileNode{BasicNode{NODE, info.Name}, make(map[string]string)}
+	atts := make(map[string]string)
+
+	switch {
+	case info.IsRegular():
+		atts["kind"] = "file"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["mtime"] = strconv.Itoa64(info.Mtime_ns / 1000000000)
+		atts["ctime"] = strconv.Itoa64(info.Ctime_ns / 1000000000)
+		atts["ino"] = strconv.Uitoa64(info.Ino)
+	case info.IsSymlink():
+		atts["kind"] = "lnk"
+		target, err := os.Readlink(path + "/" + info.Name)
+		if err == nil {
+			atts["targ"] = target
+		}
+	case info.IsSocket():
+		atts["kind"] = "sock"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+	case info.IsFifo():
+		atts["kind"] = "fifo"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+	case info.IsBlock():
+		atts["kind"] = "blk"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		// This is non-portable.
+		atts["devmaj"] = strconv.Uitoa64(info.Rdev >> 8)
+		atts["devmin"] = strconv.Uitoa64(info.Rdev & 0xFF)
+	case info.IsChar():
+		atts["kind"] = "chr"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		// This is non-portable.
+		atts["devmaj"] = strconv.Uitoa64(info.Rdev >> 8)
+		atts["devmin"] = strconv.Uitoa64(info.Rdev & 0xFF)
+	default:
+		panic("Unsupported file type")
+	}
+
+	return &FileNode{BasicNode{NODE, info.Name}, atts}
 }
 
 func (r *walkReader) Close() {}
@@ -108,7 +162,7 @@ func (r *walkReader) insertDir(enter *EnterNode) os.Error {
 	}
 	r.nodes.PushFront(makeMarkNode(enter.name))
 	for _, node := range dirs {
-		r.nodes.PushFront(makeEnterNode(enter.path + "/" + enter.name, node))
+		r.nodes.PushFront(makeEnterNode(enter.path + "/" + node.Name, node))
 	}
 
 	return nil
