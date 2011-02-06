@@ -37,7 +37,8 @@ func show(nodes NodeReader) {
 		if node.GetKind() == LEAVE {
 			depth -= 2
 		}
-		fmt.Printf("%*c %s %s\n", depth, kinds[node.GetKind()], node.GetName(), node.GetAtts())
+		atts := GetAllAtts(node)
+		fmt.Printf("%*c %s %s\n", depth, kinds[node.GetKind()], node.GetName(), atts)
 		if node.GetKind() == ENTER {
 			depth += 2
 		}

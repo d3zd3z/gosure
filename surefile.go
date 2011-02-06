@@ -26,6 +26,17 @@ type Node interface {
 	GetExpensiveAtts() map[string]string
 }
 
+func GetAllAtts(node Node) (result map[string]string) {
+	result = make(map[string]string)
+	for k, v := range node.GetAtts() {
+		result[k] = v
+	}
+	for k, v := range node.GetExpensiveAtts() {
+		result[k] = v
+	}
+	return
+}
+
 type SimpleNode struct {
 	kind int
 	name string

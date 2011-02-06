@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"os"
 	"container/list"
+	"crypto/sha1"
+	"syscall"
 )
 
 type walkReader struct {
@@ -42,7 +44,56 @@ type FileNode struct {
 	atts map[string]string
 }
 
+type DataFileNode struct {
+	FileNode
+	fullPath string
+}
+
 func (n *FileNode) GetAtts() map[string]string { return n.atts }
+
+const hexDigits = "0123456789abcdef"
+
+func (n *DataFileNode) GetExpensiveAtts() (atts map[string]string) {
+	atts = make(map[string]string)
+	hash := sha1.New()
+	file, err := os.Open(n.fullPath, os.O_RDONLY | syscall.O_NOATIME, 0)
+	if err != nil {
+		file, err = os.Open(n.fullPath, os.O_RDONLY, 0)
+	}
+	if err != nil {
+		// Don't set hash if we can't read the file.
+		return
+	}
+	defer file.Close()
+
+	buffer := make([]byte, 65536)
+	for {
+		n, err := file.Read(buffer)
+		if err == os.EOF {
+			break
+		}
+		if err != nil {
+			// TODO: Warn about read problem.
+			return
+		}
+
+		nn, err := hash.Write(buffer[0:n])
+		if err != nil || nn != n {
+			// TODO: Warn about hash problem.
+			return
+		}
+	}
+	sum := hash.Sum()
+	result := make([]byte, 40, 40)
+	for i, ch := range sum {
+		result[2*i] = hexDigits[ch >> 4]
+		result[2*i+1] = hexDigits[ch & 0x0f]
+	}
+
+	atts["sha1"] = string(result)
+
+	return
+}
 
 func (n *EnterNode) GetAtts() map[string]string { return n.atts }
 
@@ -64,7 +115,7 @@ func makeEnterNode(path string, info *os.FileInfo) *EnterNode {
 		BasicNode: BasicNode{ENTER, info.Name}}
 }
 
-func makeFileNode(path string, info *os.FileInfo) *FileNode {
+func makeFileNode(path string, info *os.FileInfo) Node {
 	atts := make(map[string]string)
 
 	switch {
@@ -112,6 +163,11 @@ func makeFileNode(path string, info *os.FileInfo) *FileNode {
 		panic("Unsupported file type")
 	}
 
+	if info.IsRegular() {
+		return &DataFileNode{
+			FileNode{BasicNode{NODE, info.Name}, atts},
+			path + "/" + info.Name}
+	}
 	return &FileNode{BasicNode{NODE, info.Name}, atts}
 }
 
