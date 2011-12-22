@@ -1,4 +1,15 @@
 *.6
 *.8
-gosure
 2sure.*.gz
+/pkg/
+/bin/
+_obj/
+
+# CGO generated stuff
+*cgo*.o
+_cgo*.h
+
+# Output binary.
+src/gosure/gosure
+
+.*.swp

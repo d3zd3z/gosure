@@ -1,20 +1,17 @@
-# Build my stuff.
+# Build as desired:
 
-include $(GOROOT)/src/Make.inc
+all: bin/gosure
 
-TARG = gosure
-GOFILES := gosure.go compare.go localtree.go surefile.go
+bin/gosure: .force
+	@GOPATH=$(PWD) goinstall -clean=true -v=false gosure
 
-# The OpenSSL sha1 library is about 4.5 times faster on my machine,
-# but using it is more complex, and has complicated licensing
-# requirements.  Another option would be the git sha1 code, which is
-# optimized for gcc.
-# USE_OPENSSL = false
+clean:
+	rm -f bin/*
+	rm -f src/*/*.6
+	rm -rf src/*/_obj
+	rm -f src/*/pr[0-9]
+	rm -f src/*/pr[0-9][0-9]
+	rm -f src/*/pr[0-9][0-9][0-9]
 
-ifdef USE_OPENSSL
-GOFILES += hashfile-openssl.go
-else
-GOFILES += hashfile-go.go
-endif
-
-include $(GOROOT)/src/Make.cmd
+.PHONY: .force
+.force:
