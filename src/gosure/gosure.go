@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"sha"
 	"strconv"
 )
 
@@ -166,8 +167,11 @@ type node struct {
 	costly func() map[string]string // Get the atts that are costly to make.
 }
 
+const hexDigits = "0123456789abcdef"
+
 func makeNode(path string, info *os.FileInfo) (n *node) {
 	atts := make(map[string]string)
+	var costly func() map[string]string
 
 	switch {
 	case info.IsDirectory():
@@ -183,7 +187,21 @@ func makeNode(path string, info *os.FileInfo) (n *node) {
 		atts["mtime"] = strconv.Itoa64(info.Mtime_ns / 1000000000)
 		atts["ctime"] = strconv.Itoa64(info.Ctime_ns / 1000000000)
 		atts["ino"] = strconv.Uitoa64(info.Ino)
-		// TODO: Setup expensive fetch for hash.
+
+		costly = func() (atts map[string]string) {
+			atts = make(map[string]string)
+			hash, err := sha.HashFile(path + "/" + info.Name)
+			if err != nil {
+				log.Printf("Unable to hash file: %s", path + "/" + info.Name)
+			}
+			hex := make([]byte, 40)
+			for i, ch := range hash {
+				hex[2*i] = hexDigits[ch >> 4]
+				hex[2*i+1] = hexDigits[ch & 0xf]
+			}
+			atts["sha1"] = string(hex)
+			return
+		}
 	case info.IsSymlink():
 		atts["kind"] = "lnk"
 		target, err := os.Readlink(path + "/" + info.Name)
@@ -196,7 +214,7 @@ func makeNode(path string, info *os.FileInfo) (n *node) {
 		panic("Unexpected file type")
 	}
 
-	n = &node{name: info.Name, atts: atts}
+	n = &node{name: info.Name, atts: atts, costly: costly}
 	return
 
 }

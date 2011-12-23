@@ -1,18 +1,17 @@
 // Hash a file, using native Go libraries.
 
-package main
+package sha
 
 import (
 	"os"
 	"syscall"
-	"./sha/_obj/sha"
 )
 
 func HashFile(path string) (result []byte, err os.Error) {
-	hash := sha.NewSha1()
-	file, err := os.Open(path, os.O_RDONLY | syscall.O_NOATIME, 0)
+	hash := NewSha1()
+	file, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOATIME, 0)
 	if err != nil {
-		file, err = os.Open(path, os.O_RDONLY, 0)
+		file, err = os.OpenFile(path, os.O_RDONLY, 0)
 	}
 	if err != nil {
 		return
