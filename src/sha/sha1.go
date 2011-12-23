@@ -2,7 +2,7 @@
 
 package sha
 
-// #cgo LDFLAGS: -lcrypto
+// #cgo pkg-config: libcrypto
 // #include <openssl/sha.h>
 import "C"
 import "unsafe"
