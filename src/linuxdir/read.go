@@ -53,11 +53,11 @@ func Readdir(name string) (entries []*os.FileInfo, err os.Error) {
 type InodeSort []*Dirent
 
 func (p InodeSort) Len() int           { return len(p) }
-func (p InodeSort) Less(i, j int) bool { return p[i].Name < p[j].Name }
+func (p InodeSort) Less(i, j int) bool { return p[i].Ino < p[j].Ino }
 func (p InodeSort) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 type NameSort []*os.FileInfo
 
 func (p NameSort) Len() int           { return len(p) }
-func (p NameSort) Less(i, j int) bool { return p[i].Ino < p[j].Ino }
+func (p NameSort) Less(i, j int) bool { return p[i].Name < p[j].Name }
 func (p NameSort) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
