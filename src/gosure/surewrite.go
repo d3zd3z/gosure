@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 )
 
 func writeSure(path string, info DirWalker) (err os.Error) {
@@ -19,11 +20,18 @@ func writeSure(path string, info DirWalker) (err os.Error) {
 	}
 	defer file.Close()
 
-	zfile, err := gzip.NewWriter(file)
-	if err != nil {
-		return
+	var zfile io.Writer
+	if strings.HasSuffix(path, ".gz") {
+		var tmp *gzip.Compressor
+		tmp, err = gzip.NewWriter(file)
+		if err != nil {
+			return
+		}
+		defer tmp.Close()
+		zfile = tmp
+	} else {
+		zfile = file
 	}
-	defer zfile.Close()
 
 	io.WriteString(zfile, magic)
 	dumpDir(zfile, "__root__", info)
