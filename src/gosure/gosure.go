@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"linuxdir"
 	"log"
+	"os"
 )
 
 var _ = linuxdir.Readdir
@@ -15,7 +16,11 @@ var _ = log.Printf
 const magic = "asure-2.0\n-----\n"
 
 func main() {
-	if false {
+	if len(os.Args) != 2 {
+		usage()
+	}
+	switch os.Args[1] {
+	case "scan":
 		dir, err := WalkRoot(".")
 		if err != nil {
 			log.Fatalf("Unable to walk root directory: %s", err)
@@ -23,7 +28,7 @@ func main() {
 		defer dir.Close()
 
 		writeSure("2sure.0", dir)
-	} else {
+	case "tmp":
 		in, err := ReadSure("2sure.0")
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
@@ -31,7 +36,13 @@ func main() {
 		defer in.Close()
 
 		writeSure("tmp", in)
+	default:
+		usage()
 	}
+}
+
+func usage() {
+	log.Fatalf("Usage: gosure {scan|tmp}\n")
 }
 
 type Node struct {
