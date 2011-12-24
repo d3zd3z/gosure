@@ -20,6 +20,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to walk root directory: %s", err)
 		}
+		defer dir.Close()
 
 		writeSure("2sure.0", dir)
 	} else {
@@ -27,6 +28,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
+		defer in.Close()
+
 		writeSure("tmp", in)
 	}
 }

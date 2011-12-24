@@ -128,6 +128,17 @@ func sureDir(state *sureState) (dir DirWalker, err os.Error) {
 func (p *SureDir) Info() *Node  { return p.info }
 func (p *SureDir) Path() string { return "TODO" }
 
+func (p *SureDir) Close() (err os.Error) {
+	if p.state.zfile != nil {
+		err = p.state.zfile.Close()
+	}
+	err = p.state.file.Close()
+	p.state.zfile = nil
+	p.state.file = nil
+	p.state.buf = nil
+	return
+}
+
 func (p *SureDir) NextDir() (dir DirWalker, err os.Error) {
 	if p.number != p.state.curDir {
 		log.Fatalf("incorrect sureread iterator use")

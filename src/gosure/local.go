@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"linuxdir"
 	"log"
+	"io"
 	"os"
 	"sha"
 	"strconv"
@@ -16,6 +17,7 @@ type DirWalker interface {
 	Path() string
 	NextDir() (dir DirWalker, err os.Error)
 	NextNonDir() (node *Node, err os.Error)
+	io.Closer
 }
 
 // The iterator is destructive, and single pass.
@@ -43,8 +45,9 @@ func WalkRoot(path string) (dir DirWalker, err os.Error) {
 }
 
 // Accessors.
-func (p *LocalDir) Info() *Node  { return p.info }
-func (p *LocalDir) Path() string { return p.path }
+func (p *LocalDir) Info() *Node     { return p.info }
+func (p *LocalDir) Path() string    { return p.path }
+func (p *LocalDir) Close() os.Error { return nil }
 
 func buildLocalDir(path string, dirStat *Node) (dir *LocalDir, err os.Error) {
 	entries, err := linuxdir.Readdir(path)
