@@ -12,7 +12,7 @@ import (
 	"sort"
 )
 
-func writeSure(path string, info *dirInfo) (err os.Error) {
+func writeSure(path string, info DirWalker) (err os.Error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return
@@ -30,26 +30,35 @@ func writeSure(path string, info *dirInfo) (err os.Error) {
 	return
 }
 
-func dumpDir(w io.Writer, name string, info *dirInfo) {
-	fmt.Fprintf(w, "d%s [%s]\n", escapeString(name), encodeAtts(info.info))
-	for _, n := range info.dirs {
-		path := info.path + "/" + n.name
-		child, err := buildDir(path, n)
+func dumpDir(w io.Writer, name string, info DirWalker) {
+	fmt.Fprintf(w, "d%s [%s]\n", escapeString(name), encodeAtts(info.Info()))
+	for {
+		child, err := info.NextDir()
 		if err != nil {
-			log.Fatalf("can't walk dir: %s (%s)", err, path)
+			log.Fatalf("can't walk dir: %s (%s)", err, info.Path())
 		}
-		dumpDir(w, n.name, child)
+		if child == nil {
+			break
+		}
+		dumpDir(w, child.Info().name, child)
 	}
 	fmt.Fprintf(w, "-\n")
 
-	for _, n := range info.nondirs {
+	for {
+		n, err := info.NextNonDir()
+		if err != nil {
+			log.Fatalf("Error walking files: %s (%s)", err, info.Path())
+		}
+		if n == nil {
+			break
+		}
 		fmt.Fprintf(w, "f%s [%s]\n", escapeString(n.name), encodeAtts(n))
 	}
 
 	fmt.Fprintf(w, "u\n")
 }
 
-func encodeAtts(node *node) string {
+func encodeAtts(node *Node) string {
 	var buf bytes.Buffer
 
 	// TODO: Compute expensive atts.
@@ -59,7 +68,7 @@ func encodeAtts(node *node) string {
 	} else {
 		costly = make(map[string]string)
 	}
-	pairs := make([]stringPair, 0, len(node.atts) + len(costly))
+	pairs := make([]stringPair, 0, len(node.atts)+len(costly))
 
 	for k, v := range node.atts {
 		pairs = append(pairs, stringPair{k, v})
@@ -81,14 +90,14 @@ func encodeAtts(node *node) string {
 }
 
 type stringPair struct {
-	key string
+	key   string
 	value string
 }
 type stringPairSlice []stringPair
 
-func (p stringPairSlice) Len() int { return len(p) }
+func (p stringPairSlice) Len() int           { return len(p) }
 func (p stringPairSlice) Less(i, j int) bool { return p[i].key < p[j].key }
-func (p stringPairSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p stringPairSlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // Escape strings in quoted-printable style (roughly).  UTF-8 bytes will
 // always be escaped.
