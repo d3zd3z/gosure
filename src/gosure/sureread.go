@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -249,7 +250,16 @@ func readName(buf *bufio.Reader) (name string, err os.Error) {
 	i := 0
 	for i < len(raw) {
 		if raw[i] == '=' {
-			log.Fatal("TODO: handle = decoding")
+			if i+3 > len(raw) {
+				log.Fatal("Encoded number beyond range")
+			}
+			var tmp uint64
+			tmp, err = strconv.Btoui64(raw[i+1:i+3], 16)
+			if err != nil {
+				log.Fatal("Unable to decode hex number in '='")
+			}
+			out.WriteByte(byte(tmp))
+			i += 2
 		} else {
 			out.WriteByte(raw[i])
 		}
