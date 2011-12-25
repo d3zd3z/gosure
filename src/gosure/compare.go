@@ -97,7 +97,7 @@ func compareNodes(left, right DirWalker) {
 			leftEnt = nextNonDir(left)
 			rightEnt = nextNonDir(right)
 
-		case leftEnt.name == rightEnt.name:
+		case leftEnt.name < rightEnt.name:
 			fmt.Printf("- file                   %s/%s\n", left.Path(), leftEnt.name)
 			leftEnt = nextNonDir(left)
 		default:
