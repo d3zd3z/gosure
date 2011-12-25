@@ -3,23 +3,35 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"linuxdir"
 	"log"
 	"os"
 )
 
-var _ = linuxdir.Readdir
-var _ = fmt.Printf
-var _ = log.Printf
+var surefileArg = flag.String("file", "2sure", "base name of surefile, will have .dat.gz appended")
+var helpArg = flag.Bool("help", false, "Ask for help")
 
-const magic = "asure-2.0\n-----\n"
+func usage(message string) {
+	fmt.Printf("error: %s\n", message)
+	fmt.Printf("usage: gosure [{-f|--file} name] {scan|update|check|signoff|show}\n\n")
+	os.Exit(1)
+}
+
+func sureName(suffix string) string {
+	return *surefileArg + "." + suffix + ".gz"
+}
 
 func main() {
-	if len(os.Args) != 2 {
-		usage()
+	flag.Parse()
+	if *helpArg {
+		usage("Help")
 	}
-	switch os.Args[1] {
+	if flag.NArg() != 1 {
+		usage("Expecting a single command")
+	}
+
+	switch flag.Arg(0) {
 	case "scan":
 		dir, err := WalkRoot(".")
 		if err != nil {
@@ -27,15 +39,15 @@ func main() {
 		}
 		defer dir.Close()
 
-		err = writeSure("2sure.0.gz", dir)
+		err = writeSure(sureName("0"), dir)
 		if err != nil {
 			log.Fatalf("Error writing surefile: %s", err)
 		}
 		// TODO: Handle these?
-		_ = os.Rename("2sure.dat.gz", "2sure.bak.gz")
-		_ = os.Rename("2sure.0.gz", "2sure.dat.gz")
+		_ = os.Rename(sureName("dat"), sureName("bak"))
+		_ = os.Rename(sureName("0"), sureName("dat"))
 	case "check":
-		dir1, err := ReadSure("2sure.dat.gz")
+		dir1, err := ReadSure(sureName("dat"))
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
@@ -50,17 +62,17 @@ func main() {
 		Compare(dir1, dir2)
 
 	case "signoff":
-		left, err := ReadSure("2sure.bak.gz")
+		left, err := ReadSure(sureName("bak"))
 		if err != nil {
 			log.Fatalf("Unable to read backup surefile: %s", err)
 		}
-		right, err := ReadSure("2sure.dat.gz")
+		right, err := ReadSure(sureName("dat"))
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
 		Compare(left, right)
 	case "tmp":
-		in, err := ReadSure("2sure.0.gz")
+		in, err := ReadSure(sureName("0"))
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
@@ -68,13 +80,13 @@ func main() {
 
 		writeSure("tmp", in)
 	default:
-		usage()
+		usage("Unexpected command")
 	}
 }
 
-func usage() {
-	log.Fatalf("Usage: gosure {scan|check|tmp}\n")
-}
+// TODO: These really belong somewhere else.
+
+const magic = "asure-2.0\n-----\n"
 
 type Node struct {
 	name   string
