@@ -44,6 +44,8 @@ type SureDir struct {
 	parentNum int
 
 	dirState dirStateType
+
+	path string
 }
 
 func ReadSure(path string) (dir DirWalker, err os.Error) {
@@ -90,11 +92,11 @@ func scanSure(state *sureState) (dir DirWalker, err os.Error) {
 		return
 	}
 
-	dir, err = sureDir(state)
+	dir, err = sureDir(state, "")
 	return
 }
 
-func sureDir(state *sureState) (dir DirWalker, err os.Error) {
+func sureDir(state *sureState, path string) (dir DirWalker, err os.Error) {
 	ch, err := state.buf.ReadByte()
 	if err != nil {
 		// Shouldn't ever get EOF.  If so, we're being
@@ -121,13 +123,18 @@ func sureDir(state *sureState) (dir DirWalker, err os.Error) {
 	parent := state.curDir
 	state.lastDir++
 	state.curDir = state.lastDir
-	sdir := &SureDir{state: state, info: info, number: state.lastDir, parentNum: parent}
+	if path == "" {
+		path = "."
+	} else {
+		path = path + "/" + name
+	}
+	sdir := &SureDir{state: state, info: info, number: state.lastDir, parentNum: parent, path: path}
 	dir = sdir
 	return
 }
 
 func (p *SureDir) Info() *Node  { return p.info }
-func (p *SureDir) Path() string { return "TODO" }
+func (p *SureDir) Path() string { return p.path }
 
 func (p *SureDir) Close() (err os.Error) {
 	if p.state.zfile != nil {
@@ -159,7 +166,7 @@ func (p *SureDir) NextDir() (dir DirWalker, err os.Error) {
 			return
 		}
 	case 'd':
-		dir, err = sureDir(p.state)
+		dir, err = sureDir(p.state, p.path)
 	default:
 		log.Fatalf("Unexpected line in surefile")
 	}
