@@ -5,6 +5,7 @@ package linuxdir
 // stat on some filesystems.
 
 // #include <sys/types.h>
+// #include <sys/sysmacros.h>
 // #include <dirent.h>
 import "C"
 import "os"
@@ -54,4 +55,14 @@ func clen(n []byte) int {
 		}
 	}
 	return len(n)
+}
+
+// Extract major and minor numbers.
+// This is a strange linux-modern-libc non-macro version.
+func Major(dev uint64) uint64 {
+	return uint64(C.gnu_dev_major((C.ulonglong)(dev)))
+}
+
+func Minor(dev uint64) uint64 {
+	return uint64(C.gnu_dev_minor((C.ulonglong)(dev)))
 }

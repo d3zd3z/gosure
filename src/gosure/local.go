@@ -141,6 +141,23 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 		} else {
 			atts["targ"] = target
 		}
+	case info.IsFifo():
+		atts["kind"] = "fifo"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+	case info.IsSocket():
+		atts["kind"] = "sock"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+	case info.IsChar():
+		atts["kind"] = "chr"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["devmaj"] = strconv.Uitoa64(linuxdir.Major(info.Rdev))
+		atts["devmin"] = strconv.Uitoa64(linuxdir.Minor(info.Rdev))
 	default:
 		fmt.Printf("Node: %v\n", *info)
 		panic("Unexpected file type")
