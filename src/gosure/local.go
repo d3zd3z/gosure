@@ -102,7 +102,7 @@ const hexDigits = "0123456789abcdef"
 
 func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 	atts := make(map[string]string)
-	var costly func() map[string]string
+	costly := noCostly
 
 	switch {
 	case info.IsDirectory():

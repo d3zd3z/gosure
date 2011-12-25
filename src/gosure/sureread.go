@@ -208,7 +208,7 @@ func (p *SureDir) NextNonDir() (node *Node, err os.Error) {
 	return
 }
 
-func noCostly() map[string]string { return nil }
+func noCostly() map[string]string { return make(map[string]string) }
 
 func mustRead(buf *bufio.Reader, expect byte) (err os.Error) {
 	ch, err := buf.ReadByte()
