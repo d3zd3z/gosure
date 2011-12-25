@@ -161,20 +161,8 @@ func compareAtts(rightWalk DirWalker, left, right *Node) {
 // Skip a directory tree.  TODO: Make this a smarter method to avoid
 // having to traverse an entire FS.
 func skipDir(dir DirWalker) {
-	// Skip directories.
-	for {
-		child := nextDir(dir)
-		if child == nil {
-			break
-		}
-		skipDir(child)
-	}
-
-	// Skip files.
-	for {
-		n := nextNonDir(dir)
-		if n == nil {
-			break
-		}
+	err := dir.Skip()
+	if err != nil {
+		panic(err)
 	}
 }

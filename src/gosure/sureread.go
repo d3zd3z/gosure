@@ -216,6 +216,31 @@ func (p *SureDir) NextNonDir() (node *Node, err os.Error) {
 	return
 }
 
+// Skip through the remainder of this node.  Needed when traversals
+// don't need a subtree.
+func (p *SureDir) Skip() (err os.Error) {
+	// Skip directories.
+	for p.dirState == readingDirs {
+		var child DirWalker
+		child, err = p.NextDir()
+		if err != nil {
+			return
+		}
+		if child != nil {
+			child.Skip()
+		}
+	}
+
+	// Skip files.
+	for p.dirState == readingFiles {
+		_, err = p.NextNonDir()
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
 func noCostly() map[string]string { return make(map[string]string) }
 
 func mustRead(buf *bufio.Reader, expect byte) (err os.Error) {

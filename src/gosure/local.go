@@ -19,6 +19,8 @@ type DirWalker interface {
 	NextDir() (dir DirWalker, err os.Error)
 	NextNonDir() (node *Node, err os.Error)
 	io.Closer
+
+	Skip() (err os.Error)
 }
 
 // The iterator is destructive, and single pass.
@@ -49,6 +51,9 @@ func WalkRoot(path string) (dir DirWalker, err os.Error) {
 func (p *LocalDir) Info() *Node     { return p.info }
 func (p *LocalDir) Path() string    { return p.path }
 func (p *LocalDir) Close() os.Error { return nil }
+
+// No work needed to skip local dirs.
+func (p *LocalDir) Skip() os.Error { return nil }
 
 func buildLocalDir(path string, dirStat *Node) (dir *LocalDir, err os.Error) {
 	entries, err := linuxdir.Readdir(path)
