@@ -69,6 +69,9 @@ func buildLocalDir(path string, dirStat *Node) (dir *LocalDir, err os.Error) {
 		if ent.IsDirectory() {
 			dirs = append(dirs, tmp)
 		} else {
+			if ent.Name == "2sure.dat.gz" || ent.Name == "2sure.bak.gz" || ent.Name == "2sure.0.gz" {
+				continue
+			}
 			nondirs = append(nondirs, tmp)
 		}
 	}
