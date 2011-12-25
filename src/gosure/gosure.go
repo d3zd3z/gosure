@@ -27,9 +27,15 @@ func main() {
 		}
 		defer dir.Close()
 
-		writeSure("2sure.0", dir)
-	case "compare":
-		dir1, err := ReadSure("2sure.0")
+		err = writeSure("2sure.0.gz", dir)
+		if err != nil {
+			log.Fatalf("Error writing surefile: %s", err)
+		}
+		// TODO: Handle these?
+		_ = os.Rename("2sure.dat.gz", "2sure.bak.gz")
+		_ = os.Rename("2sure.0.gz", "2sure.dat.gz")
+	case "check":
+		dir1, err := ReadSure("2sure.dat.gz")
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
@@ -42,8 +48,19 @@ func main() {
 		defer dir2.Close()
 
 		Compare(dir1, dir2)
+
+	case "signoff":
+		left, err := ReadSure("2sure.bak.gz")
+		if err != nil {
+			log.Fatalf("Unable to read backup surefile: %s", err)
+		}
+		right, err := ReadSure("2sure.dat.gz")
+		if err != nil {
+			log.Fatalf("Unable to read surefile: %s", err)
+		}
+		Compare(left, right)
 	case "tmp":
-		in, err := ReadSure("2sure.0")
+		in, err := ReadSure("2sure.0.gz")
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
@@ -56,7 +73,7 @@ func main() {
 }
 
 func usage() {
-	log.Fatalf("Usage: gosure {scan|compare|tmp}\n")
+	log.Fatalf("Usage: gosure {scan|check|tmp}\n")
 }
 
 type Node struct {
