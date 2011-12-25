@@ -10,6 +10,7 @@ import (
 	"os"
 	"sha"
 	"strconv"
+	"syscall"
 )
 
 type DirWalker interface {
@@ -109,12 +110,12 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 		atts["kind"] = "dir"
 		atts["uid"] = strconv.Itoa(info.Uid)
 		atts["gid"] = strconv.Itoa(info.Gid)
-		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
 	case info.IsRegular():
 		atts["kind"] = "file"
 		atts["uid"] = strconv.Itoa(info.Uid)
 		atts["gid"] = strconv.Itoa(info.Gid)
-		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
 		atts["mtime"] = strconv.Itoa64(info.Mtime_ns / 1000000000)
 		atts["ctime"] = strconv.Itoa64(info.Ctime_ns / 1000000000)
 		atts["ino"] = strconv.Uitoa64(info.Ino)
@@ -145,17 +146,17 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 		atts["kind"] = "fifo"
 		atts["uid"] = strconv.Itoa(info.Uid)
 		atts["gid"] = strconv.Itoa(info.Gid)
-		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
 	case info.IsSocket():
 		atts["kind"] = "sock"
 		atts["uid"] = strconv.Itoa(info.Uid)
 		atts["gid"] = strconv.Itoa(info.Gid)
-		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
 	case info.IsChar():
 		atts["kind"] = "chr"
 		atts["uid"] = strconv.Itoa(info.Uid)
 		atts["gid"] = strconv.Itoa(info.Gid)
-		atts["perm"] = strconv.Uitoa64(uint64(info.Permission()))
+		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
 		atts["devmaj"] = strconv.Uitoa64(linuxdir.Major(info.Rdev))
 		atts["devmin"] = strconv.Uitoa64(linuxdir.Minor(info.Rdev))
 	default:
@@ -166,4 +167,10 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 	n = &Node{name: info.Name, atts: atts, costly: costly}
 	return
 
+}
+
+// The Permission() call in 'os' is incorrect, and masks off too many
+// bits.
+func permission(f *os.FileInfo) uint32 {
+	return f.Mode &^ syscall.S_IFMT
 }
