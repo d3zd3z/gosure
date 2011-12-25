@@ -46,6 +46,7 @@ func main() {
 		// TODO: Handle these?
 		_ = os.Rename(sureName("dat"), sureName("bak"))
 		_ = os.Rename(sureName("0"), sureName("dat"))
+
 	case "check":
 		dir1, err := ReadSure(sureName("dat"))
 		if err != nil {
@@ -60,6 +61,33 @@ func main() {
 		defer dir2.Close()
 
 		Compare(dir1, dir2)
+
+	case "update":
+		dir1, err := ReadSure(sureName("dat"))
+		if err != nil {
+			log.Fatalf("Unable to read surefile: %s", err)
+		}
+		defer dir1.Close()
+
+		dir2, err := WalkRoot(".")
+		if err != nil {
+			log.Fatalf("Error walking root dir: %s", err)
+		}
+		defer dir2.Close()
+
+		upd, err := NewUpdater(dir1, dir2)
+		if err != nil {
+			log.Fatalf("Error updating: %s", err)
+		}
+
+		err = writeSure(sureName("0"), upd)
+		if err != nil {
+			log.Fatalf("Error writing surefile: %s", err)
+		}
+
+		// TODO: Handle these?
+		_ = os.Rename(sureName("dat"), sureName("bak"))
+		_ = os.Rename(sureName("0"), sureName("dat"))
 
 	case "signoff":
 		left, err := ReadSure(sureName("bak"))
