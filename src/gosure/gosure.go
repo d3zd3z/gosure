@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/pprof"
 )
 
 var surefileArg = flag.String("file", "2sure", "base name of surefile, will have .dat.gz appended")
 var helpArg = flag.Bool("help", false, "Ask for help")
+var profileArg = flag.String("profile", "", "write profiling to file")
 
 func usage(message string) {
 	fmt.Printf("error: %s\n", message)
@@ -29,6 +31,15 @@ func main() {
 	}
 	if flag.NArg() != 1 {
 		usage("Expecting a single command")
+	}
+
+	if *profileArg != "" {
+		f, err := os.Create(*profileArg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
 	switch flag.Arg(0) {
