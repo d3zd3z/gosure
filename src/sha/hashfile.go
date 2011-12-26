@@ -23,6 +23,7 @@ func HashFile(path string) (result []byte, err os.Error) {
 		var n int
 		n, err = file.Read(buffer)
 		if err == os.EOF {
+			err = nil
 			break
 		}
 		if err != nil {
