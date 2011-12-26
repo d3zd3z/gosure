@@ -132,7 +132,7 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 			atts = make(map[string]string)
 			hash, err := sha.HashFile(path + "/" + info.Name)
 			if err != nil {
-				log.Printf("Unable to hash file: %s", path+"/"+info.Name)
+				log.Printf("Unable to hash file: %s (%s)", path+"/"+info.Name, err)
 			}
 			hex := make([]byte, 40)
 			for i, ch := range hash {
@@ -175,7 +175,7 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 		atts["devmaj"] = strconv.Uitoa64(linuxdir.Major(info.Rdev))
 		atts["devmin"] = strconv.Uitoa64(linuxdir.Minor(info.Rdev))
 	default:
-		fmt.Printf("Node: %v\n", *info)
+		fmt.Printf("Node: %+v\n", *info)
 		panic("Unexpected file type")
 	}
 

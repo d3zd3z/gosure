@@ -131,7 +131,7 @@ func compareAtts(rightWalk DirWalker, left, right *Node) {
 
 		rvalue, present := ratts[key]
 		if !present {
-			log.Printf("Missing attribute: %s\n", key)
+			log.Printf("Missing attribute: %s (%s/%s)\n", key, rightWalk.Path(), right.name)
 		} else if lvalue != rvalue {
 			changed = append(changed, key)
 		}
@@ -140,7 +140,7 @@ func compareAtts(rightWalk DirWalker, left, right *Node) {
 	for key, _ := range ratts {
 		_, present := latts[key]
 		if !present {
-			log.Printf("Extra attribute: %s\n", key)
+			log.Printf("Extra attribute: %s (%s/%s)\n", key, rightWalk.Path(), right.name)
 		}
 	}
 
