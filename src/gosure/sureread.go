@@ -312,7 +312,8 @@ func readAtts(buf *bufio.Reader) (atts map[string]string, err os.Error) {
 
 	atts = make(map[string]string)
 	for {
-		p, err := buf.Peek(1)
+		var p []byte
+		p, err = buf.Peek(1)
 		if err != nil {
 			return
 		}

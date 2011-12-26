@@ -20,7 +20,8 @@ func HashFile(path string) (result []byte, err os.Error) {
 
 	buffer := make([]byte, 65536)
 	for {
-		n, err := file.Read(buffer)
+		var n int
+		n, err = file.Read(buffer)
 		if err == os.EOF {
 			break
 		}
