@@ -167,6 +167,13 @@ func makeLocalNode(path string, info *os.FileInfo) (n *Node) {
 		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
 		atts["devmaj"] = strconv.Uitoa64(linuxdir.Major(info.Rdev))
 		atts["devmin"] = strconv.Uitoa64(linuxdir.Minor(info.Rdev))
+	case info.IsBlock():
+		atts["kind"] = "blk"
+		atts["uid"] = strconv.Itoa(info.Uid)
+		atts["gid"] = strconv.Itoa(info.Gid)
+		atts["perm"] = strconv.Uitoa64(uint64(permission(info)))
+		atts["devmaj"] = strconv.Uitoa64(linuxdir.Major(info.Rdev))
+		atts["devmin"] = strconv.Uitoa64(linuxdir.Minor(info.Rdev))
 	default:
 		fmt.Printf("Node: %v\n", *info)
 		panic("Unexpected file type")
