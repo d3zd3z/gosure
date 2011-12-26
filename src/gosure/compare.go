@@ -121,6 +121,16 @@ func compareAtts(rightWalk DirWalker, left, right *Node) {
 	latts := getAllAtts(left)
 	ratts := getAllAtts(right)
 
+	// If the file type changes, don't compare the rest of the
+	// attributes, since that will usually result in spurious
+	// missing and added attributes.
+	if latts["kind"] != ratts["kind"] {
+		fmt.Printf("  %-4s -> %4s           %s/%s\n",
+			latts["kind"], ratts["kind"],
+			rightWalk.Path(), right.name)
+		return
+	}
+
 	changed := make([]string, 0, 10)
 	for key, lvalue := range latts {
 		// Ignore 'ctime' and 'ino', which are expected to
