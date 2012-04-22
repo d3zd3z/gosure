@@ -10,6 +10,6 @@ _obj/
 _cgo*.h
 
 # Output binary.
-src/gosure/gosure
+gosure
 
 .*.swp

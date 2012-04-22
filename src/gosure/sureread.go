@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -16,7 +17,7 @@ import (
 type sureState struct {
 	// Needed at the end to close everything up.
 	file  *os.File
-	zfile *gzip.Decompressor
+	zfile *gzip.Reader
 
 	buf *bufio.Reader
 
@@ -48,7 +49,7 @@ type SureDir struct {
 	path string
 }
 
-func ReadSure(path string) (dir DirWalker, err os.Error) {
+func ReadSure(path string) (dir DirWalker, err error) {
 	var state sureState
 
 	state.file, err = os.Open(path)
@@ -73,13 +74,13 @@ func ReadSure(path string) (dir DirWalker, err os.Error) {
 	return
 }
 
-func scanSure(state *sureState) (dir DirWalker, err os.Error) {
+func scanSure(state *sureState) (dir DirWalker, err error) {
 	line, err := state.buf.ReadString('\n')
 	if err != nil {
 		return
 	}
 	if line != "asure-2.0\n" {
-		err = os.NewError("Invalid magic")
+		err = errors.New("Invalid magic")
 		return
 	}
 
@@ -88,7 +89,7 @@ func scanSure(state *sureState) (dir DirWalker, err os.Error) {
 		return
 	}
 	if line != "-----\n" {
-		err = os.NewError("Expecting '-----' delimiter line")
+		err = errors.New("Expecting '-----' delimiter line")
 		return
 	}
 
@@ -96,7 +97,7 @@ func scanSure(state *sureState) (dir DirWalker, err os.Error) {
 	return
 }
 
-func sureDir(state *sureState, path string) (dir DirWalker, err os.Error) {
+func sureDir(state *sureState, path string) (dir DirWalker, err error) {
 	ch, err := state.buf.ReadByte()
 	if err != nil {
 		// Shouldn't ever get EOF.  If so, we're being
@@ -136,7 +137,7 @@ func sureDir(state *sureState, path string) (dir DirWalker, err os.Error) {
 func (p *SureDir) Info() *Node  { return p.info }
 func (p *SureDir) Path() string { return p.path }
 
-func (p *SureDir) Close() (err os.Error) {
+func (p *SureDir) Close() (err error) {
 	if p.state.zfile != nil {
 		err = p.state.zfile.Close()
 	}
@@ -147,7 +148,7 @@ func (p *SureDir) Close() (err os.Error) {
 	return
 }
 
-func (p *SureDir) NextDir() (dir DirWalker, err os.Error) {
+func (p *SureDir) NextDir() (dir DirWalker, err error) {
 	if p.number != p.state.curDir {
 		log.Fatalf("incorrect sureread iterator use")
 	}
@@ -173,7 +174,7 @@ func (p *SureDir) NextDir() (dir DirWalker, err os.Error) {
 	return
 }
 
-func (p *SureDir) NextNonDir() (node *Node, err os.Error) {
+func (p *SureDir) NextNonDir() (node *Node, err error) {
 	if p.number != p.state.curDir {
 		log.Fatal("incorrect sureread iterator use")
 	}
@@ -218,7 +219,7 @@ func (p *SureDir) NextNonDir() (node *Node, err os.Error) {
 
 // Skip through the remainder of this node.  Needed when traversals
 // don't need a subtree.
-func (p *SureDir) Skip() (err os.Error) {
+func (p *SureDir) Skip() (err error) {
 	// Skip directories.
 	for p.dirState == readingDirs {
 		var child DirWalker
@@ -243,7 +244,7 @@ func (p *SureDir) Skip() (err os.Error) {
 
 func noCostly() map[string]string { return make(map[string]string) }
 
-func mustRead(buf *bufio.Reader, expect byte) (err os.Error) {
+func mustRead(buf *bufio.Reader, expect byte) (err error) {
 	ch, err := buf.ReadByte()
 	if err != nil {
 		return
@@ -254,7 +255,7 @@ func mustRead(buf *bufio.Reader, expect byte) (err os.Error) {
 	return
 }
 
-func mustLine(buf *bufio.Reader, expect string) (err os.Error) {
+func mustLine(buf *bufio.Reader, expect string) (err error) {
 	line, err := buf.ReadString('\n')
 	if err != nil {
 		return
@@ -267,7 +268,7 @@ func mustLine(buf *bufio.Reader, expect string) (err os.Error) {
 
 // Read a space delimited string from the input, reversing the quoted
 // printable encoding.
-func readName(buf *bufio.Reader) (name string, err os.Error) {
+func readName(buf *bufio.Reader) (name string, err error) {
 	raw, err := buf.ReadString(' ')
 	if err != nil {
 		return
@@ -286,7 +287,7 @@ func readName(buf *bufio.Reader) (name string, err os.Error) {
 				log.Fatal("Encoded number beyond range")
 			}
 			var tmp uint64
-			tmp, err = strconv.Btoui64(raw[i+1:i+3], 16)
+			tmp, err = strconv.ParseUint(raw[i+1:i+3], 16, 64)
 			if err != nil {
 				log.Fatal("Unable to decode hex number in '='")
 			}
@@ -304,7 +305,7 @@ func readName(buf *bufio.Reader) (name string, err os.Error) {
 
 // Reads the attributes, including the '[' and ']' characters and the
 // terminating line.
-func readAtts(buf *bufio.Reader) (atts map[string]string, err os.Error) {
+func readAtts(buf *bufio.Reader) (atts map[string]string, err error) {
 	err = mustRead(buf, '[')
 	if err != nil {
 		return

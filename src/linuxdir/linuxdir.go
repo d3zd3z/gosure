@@ -8,12 +8,12 @@ package linuxdir
 // #include <sys/sysmacros.h>
 // #include <dirent.h>
 import "C"
-import "os"
+
 import "unsafe"
 
 type Dir C.DIR
 
-func Open(name string) (result *Dir, err os.Error) {
+func Open(name string) (result *Dir, err error) {
 	tmp, err := C.opendir(C.CString(name))
 	if err != nil {
 		return
@@ -33,7 +33,7 @@ type Dirent struct {
 }
 
 // TODO, change this to readdir_r.
-func (p *Dir) Readdir() (entry *Dirent, err os.Error) {
+func (p *Dir) Readdir() (entry *Dirent, err error) {
 	ent, err := C.readdir((*C.DIR)(p))
 	if ent == nil {
 		entry = nil

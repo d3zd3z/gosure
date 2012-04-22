@@ -3,20 +3,20 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 )
 
 // Call into the comparison, capturing any error that is thrown.
-func Compare(left, right DirWalker) (err os.Error) {
+func Compare(left, right DirWalker) (err error) {
 	defer func() {
 		e := recover()
 		var correct bool
-		err, correct = e.(os.Error)
+		err, correct = e.(error)
 		if !correct {
-			err = os.NewError("Unknown error")
+			err = errors.New("Unknown error")
 		}
 	}()
 

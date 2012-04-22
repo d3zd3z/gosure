@@ -1,9 +1,9 @@
 # Build as desired:
 
-all: bin/gosure
+all: gosure
 
-bin/gosure: .force
-	@GOPATH=$(PWD) goinstall -clean=true -v=false gosure
+gosure: .force
+	GOPATH=$(PWD) go build gosure
 
 clean:
 	rm -f bin/*

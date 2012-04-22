@@ -1,15 +1,11 @@
 package main
 
-import (
-	"os"
-)
-
 // Update is an iterator that returns the results of the 'right'
 // iterator.  However, it also uses information available in the
 // 'left' iterator to get the 'costly' attributes if it is clear that
 // the file hasn't changed.
 
-func NewUpdater(left, right DirWalker) (dir DirWalker, err os.Error) {
+func NewUpdater(left, right DirWalker) (dir DirWalker, err error) {
 	var tmp UpdateDir
 
 	tmp.left = left
@@ -42,12 +38,12 @@ type UpdateDir struct {
 
 // Close this combining iterator.  Does _not_ close the child
 // iterators.
-func (p *UpdateDir) Close() (err os.Error) { return }
+func (p *UpdateDir) Close() (err error) { return }
 
 func (p *UpdateDir) Info() *Node  { return p.right.Info() }
 func (p *UpdateDir) Path() string { return p.right.Path() }
 
-func (p *UpdateDir) NextDir() (dir DirWalker, err os.Error) {
+func (p *UpdateDir) NextDir() (dir DirWalker, err error) {
 	var tmp DirWalker
 	if p.rchild != nil {
 		tmp, err = p.right.NextDir()
@@ -94,7 +90,7 @@ func (p *UpdateDir) NextDir() (dir DirWalker, err os.Error) {
 	return
 }
 
-func (p *UpdateDir) NextNonDir() (node *Node, err os.Error) {
+func (p *UpdateDir) NextNonDir() (node *Node, err error) {
 	var tmp *Node
 	if p.rnode != nil {
 		tmp, err = p.right.NextNonDir()
@@ -178,7 +174,7 @@ func keySame(a, b map[string]string, key string) bool {
 	return present && avalue == bvalue
 }
 
-func (p *UpdateDir) Skip() (err os.Error) {
+func (p *UpdateDir) Skip() (err error) {
 	e1 := p.left.Skip()
 	err = p.right.Skip()
 	if err == nil {

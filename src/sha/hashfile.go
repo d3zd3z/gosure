@@ -3,11 +3,12 @@
 package sha
 
 import (
+	"io"
 	"os"
 	"syscall"
 )
 
-func HashFile(path string) (result []byte, err os.Error) {
+func HashFile(path string) (result []byte, err error) {
 	hash := NewSha1()
 	file, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOATIME, 0)
 	if err != nil {
@@ -22,7 +23,7 @@ func HashFile(path string) (result []byte, err os.Error) {
 	for {
 		var n int
 		n, err = file.Read(buffer)
-		if err == os.EOF {
+		if err == io.EOF {
 			err = nil
 			break
 		}

@@ -6,14 +6,14 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"log"
 	"io"
+	"log"
 	"os"
 	"sort"
 	"strings"
 )
 
-func writeSure(path string, info DirWalker) (err os.Error) {
+func writeSure(path string, info DirWalker) (err error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return
@@ -22,11 +22,8 @@ func writeSure(path string, info DirWalker) (err os.Error) {
 
 	var zfile io.Writer
 	if strings.HasSuffix(path, ".gz") {
-		var tmp *gzip.Compressor
-		tmp, err = gzip.NewWriter(file)
-		if err != nil {
-			return
-		}
+		var tmp *gzip.Writer
+		tmp = gzip.NewWriter(file)
 		defer tmp.Close()
 		zfile = tmp
 	} else {
