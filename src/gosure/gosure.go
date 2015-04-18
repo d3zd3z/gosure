@@ -13,6 +13,7 @@ import (
 var surefileArg = flag.String("file", "2sure", "base name of surefile, will have .dat.gz appended")
 var helpArg = flag.Bool("help", false, "Ask for help")
 var profileArg = flag.String("profile", "", "write profiling to file")
+var srcArg = flag.String("src", "", "base name of source surefile, will have .dat.gz appended, same as 'file' if not specified")
 
 func usage(message string) {
 	fmt.Printf("error: %s\n", message)
@@ -22,6 +23,16 @@ func usage(message string) {
 
 func sureName(suffix string) string {
 	return *surefileArg + "." + suffix + ".gz"
+}
+
+func sourceName(suffix string) string {
+	var base string
+	if *srcArg != "" {
+		base = *srcArg
+	} else {
+		base = *surefileArg
+	}
+	return base + "." + suffix + ".gz"
 }
 
 func main() {
@@ -74,7 +85,7 @@ func main() {
 		Compare(dir1, dir2)
 
 	case "update":
-		dir1, err := ReadSure(sureName("dat"))
+		dir1, err := ReadSure(sourceName("dat"))
 		if err != nil {
 			log.Fatalf("Unable to read surefile: %s", err)
 		}
