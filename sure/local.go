@@ -77,7 +77,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		atts["size"] = i64toa(sys.Size)
 	case syscall.S_IFLNK:
 		atts["kind"] = "lnk"
-		target, err := os.Readlink(path.Join(name, info.Name()))
+		target, err := os.Readlink(name)
 		if err != nil {
 			log.Printf("Error reading symlink: %v", err)
 		} else {
