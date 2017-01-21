@@ -14,6 +14,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	est := node.EstimateHashes()
+	prog := sure.NewProgress(est.Files, est.Bytes)
+	prog.Flush()
+	node.ComputeHashes(&prog)
+	prog.Flush()
+
 	// Dump it out for now in gob format.
 	fd, err := os.Create("2sure.dat.gz")
 	if err != nil {
