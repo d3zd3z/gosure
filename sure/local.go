@@ -47,7 +47,7 @@ func walkFs(name, fullName string, stat os.FileInfo) (tree *Tree, err error) {
 			child, err = walkFs(ent.Name(),
 				path.Join(fullName, ent.Name()), ent)
 			if err != nil {
-				log.Printf("Unable to stat: %v", err)
+				log.Printf("Unable to stat %q: %v", path.Join(fullName, ent.Name()), err)
 				continue
 			}
 			tree.Children = append(tree.Children, child)
