@@ -35,6 +35,15 @@ func main() {
 	pf := scan.PersistentFlags()
 	pf.StringVarP(&scanDir, "dir", "d", ".", "Directory to scan")
 
+	update := &cobra.Command{
+		Use:   "update",
+		Short: "Update tree",
+		Long:  "Scan the tree, updating files that have changed",
+		Run:   doUpdate,
+	}
+
+	root.AddCommand(update)
+
 	if err := root.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -47,6 +56,10 @@ func doScan(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
+	hashSave(tree)
+}
+
+func hashSave(tree *sure.Tree) {
 	est := tree.EstimateHashes()
 	prog := sure.NewProgress(est.Files, est.Bytes)
 	prog.Flush()
@@ -55,7 +68,7 @@ func doScan(cmd *cobra.Command, args []string) {
 
 	writeSure(tree)
 	os.Rename("2sure.dat.gz", "2sure.bak.gz")
-	err = os.Rename("2sure.0.gz", "2sure.dat.gz")
+	err := os.Rename("2sure.0.gz", "2sure.dat.gz")
 	if err != nil {
 		log.Printf("Unable to rename 2sure.0.gz: %v", err)
 	}
