@@ -28,11 +28,14 @@ func (e *Estimate) update(t *Tree) {
 		_, ok := f.Atts["sha1"]
 		if !ok {
 			e.Files += 1
-			size, err := strconv.ParseUint(f.Atts["size"], 10, 64)
-			if err != nil {
-				// Only nodes with a valid size are
+			size, err := f.Atts.GetUint64("size")
+			if err == NoKey {
+				// Only nodes with a size are
 				// considered for hashing.
 				continue
+			}
+			if err != nil {
+				panic(err)
 			}
 			e.Bytes += size
 		}
