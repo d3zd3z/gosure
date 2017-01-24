@@ -19,7 +19,7 @@ func HashFile(path string) (result []byte, err error) {
 	}
 	defer file.Close()
 
-	buffer := make([]byte, 65536)
+	buffer := getBuffer()
 	for {
 		var n int
 		n, err = file.Read(buffer)
@@ -34,6 +34,34 @@ func HashFile(path string) (result []byte, err error) {
 
 		hash.Update(buffer[0:n])
 	}
+	putBuffer(buffer)
 	result = hash.Final()
 	return
+}
+
+// Keep a pool of buffers.  The size will be the number of potential
+// buffers in the pool.
+var bufPool chan []byte
+
+func init() {
+	bufPool = make(chan []byte, 16)
+}
+
+// Fetch a buffer for use, allocating if the pool is empty.
+func getBuffer() []byte {
+	select {
+	case buf := <-bufPool:
+		return buf
+	default:
+		return make([]byte, 65536)
+	}
+}
+
+// Return the buffer to the pool, discarding it if the pool is full.
+func putBuffer(buf []byte) {
+	select {
+	case bufPool <- buf:
+		// Pushed.  Default discards and lets the GC clean it
+		// up.
+	}
 }
