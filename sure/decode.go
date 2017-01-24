@@ -221,7 +221,6 @@ func readAtts(buf *bufio.Reader) (atts AttMap, err error) {
 
 		atts[key] = value
 	}
-	panic("Not reached")
 }
 
 func mustRead(buf *bufio.Reader, expect byte) (err error) {
@@ -230,7 +229,7 @@ func mustRead(buf *bufio.Reader, expect byte) (err error) {
 		return
 	}
 	if ch != expect {
-		log.Fatal("Expecting '%c' in surefile, got '%c'", expect, ch)
+		log.Fatalf("Expecting '%c' in surefile, got '%c'", expect, ch)
 	}
 	return
 }
