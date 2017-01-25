@@ -44,6 +44,14 @@ func main() {
 
 	root.AddCommand(update)
 
+	signoff := &cobra.Command{
+		Use:   "signoff",
+		Short: "Compare prior scan with current",
+		Run:   doSignoff,
+	}
+
+	root.AddCommand(signoff)
+
 	if err := root.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
