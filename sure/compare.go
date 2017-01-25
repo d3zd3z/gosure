@@ -48,8 +48,8 @@ func compWalk(older, newer *Tree, name string) {
 	}
 	sort.Sort(sort.StringSlice(oldNames))
 
-	for _, name := range oldNames {
-		chname := path.Join(name, name)
+	for _, subname := range oldNames {
+		chname := path.Join(name, subname)
 		fmt.Printf("- %-22s %s\n", "dir", chname)
 	}
 
@@ -81,8 +81,8 @@ func compFiles(older, newer []*File, name string) {
 	}
 	sort.Sort(sort.StringSlice(oldNames))
 
-	for _, name := range oldNames {
-		chname := path.Join(name, name)
+	for _, subname := range oldNames {
+		chname := path.Join(name, subname)
 		fmt.Printf("- %-22s %s\n", "file", chname)
 	}
 }
