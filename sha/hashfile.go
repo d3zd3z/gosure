@@ -41,11 +41,7 @@ func HashFile(path string) (result []byte, err error) {
 
 // Keep a pool of buffers.  The size will be the number of potential
 // buffers in the pool.
-var bufPool chan []byte
-
-func init() {
-	bufPool = make(chan []byte, 16)
-}
+var bufPool chan []byte = make(chan []byte, 16)
 
 // Fetch a buffer for use, allocating if the pool is empty.
 func getBuffer() []byte {
