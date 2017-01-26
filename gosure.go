@@ -52,6 +52,14 @@ func main() {
 
 	root.AddCommand(signoff)
 
+	check := &cobra.Command{
+		Use:   "check",
+		Short: "Compare current scan with tree",
+		Run:   doCheck,
+	}
+
+	root.AddCommand(check)
+
 	if err := root.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
