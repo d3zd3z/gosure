@@ -210,7 +210,7 @@ func (s *SccsFile) GetRev(delta int) ([]string, error) {
 
 func scan() error {
 	sf := SccsFile{
-		name: "SCCS/s.foo",
+		name: sccsFile,
 	}
 
 	if err := sf.ScanRevs(); err != nil {
