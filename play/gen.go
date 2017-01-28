@@ -15,6 +15,11 @@ import (
 	"os/exec"
 )
 
+var sccsFile string
+var playFile string
+var genLines int
+var genDeltas int
+
 type Sccs struct {
 	name string
 }
@@ -52,7 +57,7 @@ func (s *Sccs) Initial(data []int) error {
 		return err
 	}
 
-	err = exec.Command("sccs", "admin", "-i"+s.name, "-n", "SCCS/s."+s.name).Run()
+	err = exec.Command("sccs", "admin", "-i"+s.name, "-n", sccsFile).Run()
 	if err != nil {
 		return err
 	}
@@ -90,25 +95,27 @@ func shuffle(data []int) {
 }
 
 func gen() {
-	// Clean up prior runs.
-	if err := os.Remove("SCCS/s.foo"); err != nil {
-		log.Fatal(err)
+	if _, err := os.Lstat(playFile); err == nil {
+		log.Fatalf("plain file %q is present, remove and rerun", playFile)
 	}
 
+	// Clean up prior runs.
+	os.Remove(sccsFile)
+
 	// Start with the file sorted, and create the initial version.
-	data := make([]int, 100)
+	data := make([]int, genLines)
 
 	for i := range data {
 		data[i] = i
 	}
 
-	ss := NewSccs("foo")
+	ss := NewSccs(playFile)
 	if err := ss.Initial(data); err != nil {
 		log.Fatal(err)
 	}
 
 	// Fill the delta with a thousand random shuffled variants.
-	for i := 0; i < 3; i++ {
+	for i := 0; i < genDeltas; i++ {
 		// Shuffle a subset of the data for the delta.
 		a := rand.Intn(len(data))
 		b := rand.Intn(len(data))
