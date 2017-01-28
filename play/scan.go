@@ -74,11 +74,13 @@ func (s *SccsFile) GetRevSccs(delta int) ([]string, error) {
 	return lines, nil
 }
 
-// The state of a given request.
+// For each delta, we track a state of how that delta affects the
+// input so far.  These are always kept sorted, with the largest delta
+// at the front.
 type stateMode int
 type state struct {
-	mode  stateMode
 	delta int
+	mode  stateMode
 }
 type states struct{ state []state }
 
@@ -112,11 +114,20 @@ func (st *states) push(delta int, mode stateMode) {
 		mode:  mode,
 		delta: delta,
 	})
+
+	// Move the node to its proper sort position.
+	end := len(st.state) - 1
+	pos := end - 1
+	for pos >= 0 && st.state[end].delta > st.state[pos].delta {
+		st.state[pos], st.state[end] = st.state[end], st.state[pos]
+		pos--
+		end--
+	}
 }
 
 // Are we currently keeping?
 func (st *states) isKeep() bool {
-	for i := len(st.state) - 1; i >= 0; i-- {
+	for i := range st.state {
 		switch st.state[i].mode {
 		case stKeep:
 			return true
@@ -124,11 +135,12 @@ func (st *states) isKeep() bool {
 			return false
 		}
 	}
-	return false
+	panic("Should not be reached")
 }
 
 // Retrieve the delta from an sccs file directly.
 func (s *SccsFile) GetRev(delta int) ([]string, error) {
+	// fmt.Printf("GetRev: %d\n", delta)
 	fd, err := os.Open(s.name)
 	if err != nil {
 		return nil, err
@@ -151,7 +163,7 @@ func (s *SccsFile) GetRev(delta int) ([]string, error) {
 
 		if len(line) == 0 || line[0] != '\x01' {
 			// Textual line.  Process if we should be.
-			// fmt.Printf("line: %q, state: %v, keep: %b\n", line, state, state.isKeep())
+			// fmt.Printf("line: %q, keep: %t\n", line, state.isKeep())
 			if state.isKeep() {
 				result = append(result, string(line))
 			}
@@ -178,13 +190,9 @@ func (s *SccsFile) GetRev(delta int) ([]string, error) {
 
 		// fmt.Printf("Control: '%c', %d\n", line[1], dl)
 
-		if line[1] == 'E' {
-			state.pop(dl)
-			// fmt.Printf("state: %+v\n", state)
-			continue
-		}
-
 		switch line[1] {
+		case 'E':
+			state.pop(dl)
 		case 'I':
 			// Do the insert if this insert is older than
 			// the requested delta.
@@ -202,7 +210,7 @@ func (s *SccsFile) GetRev(delta int) ([]string, error) {
 				state.push(dl, stNext)
 			}
 		}
-		// fmt.Printf("state: %+v\n", state)
+		// fmt.Printf("state: %v\n", state)
 	}
 
 	return result, nil
