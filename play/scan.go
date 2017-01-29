@@ -1,17 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"reflect"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
+
+	"davidb.org/code/gosure/weave"
 )
 
 type SccsFile struct {
@@ -20,40 +18,16 @@ type SccsFile struct {
 	revs map[int]string
 }
 
-var deltaRe *regexp.Regexp = regexp.MustCompile("^\x01d D ([\\d\\.]+) .* (\\d+) \\d+$")
-
 // Load and populate 'revs' from the header.
 func (s *SccsFile) ScanRevs() error {
-	fd, err := os.Open(s.name)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-
-	bfd := bufio.NewReader(fd)
-
-	s.revs = make(map[int]string)
-
-	for {
-		line, _, err := bfd.ReadLine()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		res := deltaRe.FindStringSubmatch(string(line))
-		if res != nil {
-			num, err := strconv.Atoi(res[2])
-			if err != nil {
-				return err
-			}
-			s.revs[num] = res[1]
-		}
+	wv := weave.File{
+		Name: s.name,
 	}
 
-	return nil
+	var err error
+	s.revs, err = wv.ScanRevs()
+
+	return err
 }
 
 // Get the text of a revision using SCCS.
@@ -74,70 +48,6 @@ func (s *SccsFile) GetRevSccs(delta int) ([]string, error) {
 	return lines, nil
 }
 
-// For each delta, we track a state of how that delta affects the
-// input so far.  These are always kept sorted, with the largest delta
-// at the front.
-type stateMode int
-type state struct {
-	delta int
-	mode  stateMode
-}
-type states struct{ state []state }
-
-const (
-	stKeep = iota
-	stSkip
-	stNext
-)
-
-// Remove the given numbered state.
-func (st *states) pop(delta int) {
-	found := -1
-	for i := range st.state {
-		if st.state[i].delta == delta {
-			found = i
-		}
-	}
-	if found == -1 {
-		panic("State pop of not present")
-	}
-
-	ln := len(st.state)
-	if found < ln-1 {
-		copy(st.state[found:ln-1], st.state[found+1:ln])
-	}
-	st.state = st.state[:ln-1]
-}
-
-func (st *states) push(delta int, mode stateMode) {
-	st.state = append(st.state, state{
-		mode:  mode,
-		delta: delta,
-	})
-
-	// Move the node to its proper sort position.
-	end := len(st.state) - 1
-	pos := end - 1
-	for pos >= 0 && st.state[end].delta > st.state[pos].delta {
-		st.state[pos], st.state[end] = st.state[end], st.state[pos]
-		pos--
-		end--
-	}
-}
-
-// Are we currently keeping?
-func (st *states) isKeep() bool {
-	for i := range st.state {
-		switch st.state[i].mode {
-		case stKeep:
-			return true
-		case stSkip:
-			return false
-		}
-	}
-	panic("Should not be reached")
-}
-
 // Retrieve the delta from an sccs file directly.
 func (s *SccsFile) GetRev(delta int) ([]string, error) {
 	// fmt.Printf("GetRev: %d\n", delta)
@@ -147,73 +57,27 @@ func (s *SccsFile) GetRev(delta int) ([]string, error) {
 	}
 	defer fd.Close()
 
-	bfd := bufio.NewReader(fd)
-
-	state := states{state: make([]state, 0, 10)}
-	result := make([]string, 0)
-
-	for {
-		line, _, err := bfd.ReadLine()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		if len(line) == 0 || line[0] != '\x01' {
-			// Textual line.  Process if we should be.
-			// fmt.Printf("line: %q, keep: %t\n", line, state.isKeep())
-			if state.isKeep() {
-				result = append(result, string(line))
-			}
-			continue
-		}
-
-		// At this point, all should be control lines.  Skip
-		// any that are too short.
-		if len(line) < 4 {
-			continue
-		}
-
-		// Ignore control lines other than the insert/delete
-		// lines.
-		if line[1] != 'I' && line[1] != 'D' && line[1] != 'E' {
-			continue
-		}
-
-		dl, err := strconv.Atoi(string(line[3:]))
-		if err != nil {
-			// TODO: This could be more informative.
-			return nil, err
-		}
-
-		// fmt.Printf("Control: '%c', %d\n", line[1], dl)
-
-		switch line[1] {
-		case 'E':
-			state.pop(dl)
-		case 'I':
-			// Do the insert if this insert is older than
-			// the requested delta.
-			if delta >= dl {
-				state.push(dl, stKeep)
-			} else {
-				state.push(dl, stSkip)
-			}
-		case 'D':
-			// Do the delete if this delete is newer than
-			// the current.  If not, don't account for it.
-			if delta >= dl {
-				state.push(dl, stSkip)
-			} else {
-				state.push(dl, stNext)
-			}
-		}
-		// fmt.Printf("state: %v\n", state)
+	var sink captureSink
+	wv := weave.NewParser(fd, &sink, delta)
+	err = wv.ParseTo(0)
+	if err == nil {
+		return nil, err
 	}
+	return sink, nil
+}
 
-	return result, nil
+// The captureSink is just an array of the lines of the delta.
+type captureSink []string
+
+func (s *captureSink) Insert(delta int) error { return nil }
+func (s *captureSink) Delete(delta int) error { return nil }
+func (s *captureSink) End(delta int) error    { return nil }
+
+func (s *captureSink) Plain(text string, keep bool) error {
+	if keep {
+		*s = append(*s, text)
+	}
+	return nil
 }
 
 func scan() error {
