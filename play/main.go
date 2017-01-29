@@ -8,10 +8,16 @@ package main
 
 import (
 	"log"
+	"os"
+	"runtime"
+	"runtime/pprof"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+var cpuProfile string
+var memProfile string
 
 func main() {
 	root := &cobra.Command{
@@ -25,6 +31,8 @@ func main() {
 
 	fl := root.PersistentFlags()
 	fl.StringVarP(&sccsFile, "sccs-file", "f", "SCCS/s.foo", "SCCS file to use")
+	fl.StringVar(&cpuProfile, "cpu-profile", "", "Output cpu profile to file")
+	fl.StringVar(&memProfile, "mem-profile", "", "Output memory profile to file")
 
 	gen := &cobra.Command{
 		Use:   "gen",
@@ -57,9 +65,31 @@ func doGen(cmd *cobra.Command, args []string) {
 }
 
 func doScan(cmd *cobra.Command, args []string) {
+	if cpuProfile != "" {
+		f, err := os.Create(cpuProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	checkSccsFile(cmd)
 	if err := scan(); err != nil {
 		log.Fatal(err)
+	}
+
+	if memProfile != "" {
+		f, err := os.Create(memProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		runtime.GC()
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
