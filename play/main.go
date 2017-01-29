@@ -54,6 +54,18 @@ func main() {
 
 	root.AddCommand(scan)
 
+	delta := &cobra.Command{
+		Use:   "delta",
+		Short: "Test generating deltas",
+		Run:   doDelta,
+	}
+
+	fl = delta.Flags()
+	fl.IntVarP(&deltaLines, "lines", "l", 100, "# lines in data file")
+	fl.IntVarP(&deltaDeltas, "deltas", "d", 2, "# Deltas to test")
+
+	root.AddCommand(delta)
+
 	if err := root.Execute(); err != nil {
 		log.Fatal(err)
 	}
@@ -91,6 +103,11 @@ func doScan(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 	}
+}
+
+func doDelta(cmd *cobra.Command, args []string) {
+	checkSccsFile(cmd)
+	delta()
 }
 
 func checkSccsFile(cmd *cobra.Command) {
