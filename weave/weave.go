@@ -90,15 +90,18 @@ func (p *Parser) ParseTo(lineno int) error {
 		line = line[:len(line)-1]
 
 		if len(line) == 0 || line[0] != '\x01' {
-			// Textual line.
-			p.lineNo++
+			// Textual line.  Count line numbers for the
+			// lines we're keeing
 			strLine := string(line)
-			if p.lineNo == lineno {
-				// This is the desired stopping point,
-				// return to the caller.
-				p.pending = strLine
-				p.isPending = true
-				return nil
+			if p.keeping {
+				p.lineNo++
+				if p.lineNo == lineno {
+					// This is the desired stopping point,
+					// return to the caller.
+					p.pending = strLine
+					p.isPending = true
+					return nil
+				}
 			}
 			err = p.Sink.Plain(strLine, p.keeping)
 			if err != nil {
