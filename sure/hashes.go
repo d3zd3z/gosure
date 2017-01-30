@@ -1,10 +1,9 @@
 package sure
 
 import (
-	"fmt"
 	"log"
 	"path"
-	"strconv"
+	"syscall"
 
 	"davidb.org/code/gosure/sha"
 )
@@ -25,19 +24,14 @@ func (t *Tree) EstimateHashes() Estimate {
 func (e *Estimate) update(t *Tree) {
 	// Account for any files in this tree.
 	for _, f := range t.Files {
-		_, ok := f.Atts["sha1"]
-		if !ok {
-			e.Files += 1
-			size, err := f.Atts.GetUint64("size")
-			if err == NoKey {
-				// Only nodes with a size are
-				// considered for hashing.
+		if f.Atts.Sha == nil {
+			if f.Atts.Kind != syscall.S_IFREG {
+				// Only regular files are considered
+				// for hashing.
 				continue
 			}
-			if err != nil {
-				panic(err)
-			}
-			e.Bytes += size
+			e.Files += 1
+			e.Bytes += uint64(f.Atts.Size)
 		}
 	}
 
@@ -55,17 +49,14 @@ func (t *Tree) ComputeHashes(prog *Progress) {
 
 func (t *Tree) hashWalk(prog *Progress, name string) {
 	for _, f := range t.Files {
-		_, ok := f.Atts["sha1"]
-		size, sizeOk := f.Atts["size"]
-		if !ok && sizeOk {
+		if f.Atts.Kind == syscall.S_IFREG && f.Atts.Sha == nil {
 			hash, err := sha.HashFile(path.Join(name, f.Name))
 			if err != nil {
 				log.Printf("Unable to hash file: %v", err)
 				continue
 			}
-			f.Atts["sha1"] = fmt.Sprintf("%x", hash)
-			sz, _ := strconv.ParseUint(size, 10, 64)
-			prog.Update(1, sz)
+			f.Atts.Sha = hash
+			prog.Update(1, uint64(f.Atts.Size))
 		}
 	}
 

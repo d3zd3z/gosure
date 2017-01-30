@@ -1,10 +1,14 @@
 package sure
 
+import (
+	"syscall"
+)
+
 // Notice: there is a fairly strong assumption that this tool will not
 // be used to cross filesystems.  We don't store device numbers and
 // can't distinguish inodes from different filesystems.
 
-type inoMap map[uint64]AttMap
+type inoMap map[uint64]*AttMap
 
 // Migrate hashes from oldTree to newTree.  Any files that are the
 // same in the oldTree as the newTree will have their hash migrated to
@@ -29,15 +33,12 @@ func getHashes(tree *Tree, hashes inoMap) {
 	// Then the file nodes.
 	for _, f := range tree.Files {
 		// Only attend to ones with a 'sha1' property.
-		_, ok := f.Atts["sha1"]
-		if !ok {
+		if f.Atts.Sha == nil {
 			continue
 		}
 
-		// And only those with an inode property (although we
-		// will always write one.
-		ino, err := f.Atts.GetUint64("ino")
-		if err != nil {
+		// And only those that are regular files.
+		if f.Atts.Kind != syscall.S_IFREG {
 			continue
 		}
 
@@ -47,7 +48,7 @@ func getHashes(tree *Tree, hashes inoMap) {
 		// Come up with a way of dealing with this or just
 		// warning.
 
-		hashes[ino] = f.Atts
+		hashes[f.Atts.Ino] = &f.Atts
 	}
 }
 
@@ -60,38 +61,21 @@ func updateHashes(tree *Tree, hashes inoMap) {
 
 	// Then the file nodes.
 	for _, f := range tree.Files {
-		ino, err := f.Atts.GetUint64("ino")
-		if err != nil {
+		if f.Atts.Kind != syscall.S_IFREG {
 			continue
 		}
 
-		oldAtt, ok := hashes[ino]
+		oldAtt, ok := hashes[f.Atts.Ino]
 		if !ok {
 			continue
 		}
 
 		// For sanity, make sure the ctime, and size are the
 		// same.
-		if !sameAtt(oldAtt, f.Atts, "ctime") || !sameAtt(oldAtt, f.Atts, "size") {
+		if oldAtt.Ctime != f.Atts.Ctime || oldAtt.Size != f.Atts.Size {
 			continue
 		}
 
-		f.Atts["sha1"] = oldAtt["sha1"]
+		f.Atts.Sha = oldAtt.Sha
 	}
-}
-
-// Return if both have the attribute present, and it has the same
-// value.
-func sameAtt(a, b AttMap, key string) bool {
-	av, ok := a[key]
-	if !ok {
-		return false
-	}
-
-	bv, ok := b[key]
-	if !ok {
-		return false
-	}
-
-	return av == bv
 }

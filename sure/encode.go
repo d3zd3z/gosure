@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"sort"
+	"syscall"
 )
 
 // Encode the sure tree to the given writer.
@@ -68,21 +68,64 @@ func (f *File) outFile(out *bufio.Writer) error {
 func encodeAtts(atts AttMap) string {
 	var buf bytes.Buffer
 
-	pairs := make([]stringPair, 0, len(atts))
+	// The attributes present must match those set by the local
+	// value, since zero is valid for many of these.
 
-	for k, v := range atts {
-		pairs = append(pairs, stringPair{k, v})
+	isReg := atts.Kind == syscall.S_IFREG
+	hasTime := atts.Kind == syscall.S_IFREG
+	hasDev := atts.Kind == syscall.S_IFCHR || atts.Kind == syscall.S_IFBLK
+	isLink := atts.Kind == syscall.S_IFLNK
+
+	if hasTime {
+		fmt.Fprintf(&buf, "ctime %d ", atts.Ctime)
 	}
-	sort.Sort(stringPairSlice(pairs))
+	if hasDev {
+		fmt.Fprintf(&buf, "devmaj %d ", atts.Devmaj)
+		fmt.Fprintf(&buf, "devmin %d ", atts.Devmin)
+	}
+	if !isLink {
+		fmt.Fprintf(&buf, "gid %d ", atts.Gid)
+		fmt.Fprintf(&buf, "ino %d ", atts.Ino)
+	}
 
-	for _, p := range pairs {
-		buf.WriteString(p.key)
-		buf.WriteRune(' ')
-		buf.WriteString(escapeString(p.value))
-		buf.WriteRune(' ')
+	ktext, ok := kindNames[atts.Kind]
+	if !ok {
+		panic("Invalid kind")
+	}
+	fmt.Fprintf(&buf, "kind %s ", ktext)
+
+	if hasTime {
+		fmt.Fprintf(&buf, "mtime %d ", atts.Mtime)
+	}
+	if !isLink {
+		fmt.Fprintf(&buf, "perm %d ", atts.Perm)
+	}
+	if isReg && atts.Sha != nil {
+		fmt.Fprintf(&buf, "sha1 %x ", atts.Sha)
+	}
+	if isReg {
+		fmt.Fprintf(&buf, "size %d ", atts.Size)
+	}
+	if isLink {
+		fmt.Fprintf(&buf, "targ %s ", escapeString(atts.Targ))
+	}
+	if !isLink {
+		fmt.Fprintf(&buf, "uid %d ", atts.Uid)
 	}
 
 	return buf.String()
+}
+
+var kindNames = make(map[uint32]string)
+
+func init() {
+	kindNames[syscall.S_IFDIR] = "dir"
+	kindNames[syscall.S_IFREG] = "file"
+	kindNames[syscall.S_IFLNK] = "lnk"
+	kindNames[syscall.S_IFIFO] = "fifo"
+	kindNames[syscall.S_IFSOCK] = "sock"
+	kindNames[syscall.S_IFCHR] = "chr"
+	kindNames[syscall.S_IFBLK] = "blk"
 }
 
 // A pair of key/value, that can be sorted by key.

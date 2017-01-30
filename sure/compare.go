@@ -1,6 +1,7 @@
 package sure
 
 import (
+	"bytes"
 	"fmt"
 	"path"
 	"sort"
@@ -90,48 +91,35 @@ func compFiles(older, newer []*File, name string) {
 // Compare attributes, and if any differ, print them out and the file
 // name.  Ignores attributes "ctime" and "ino" because these will not
 // be the same when restored from a backup.
-//
-// There are some challenges.  It is possible that the old and new
-// scans were made with different versions of this program, or even
-// with different programs entirely, and therefore may have different
-// attributes available.  We want to warn the user about these
-// scenarios, but not otherwise report them for each file.  The warn
-// is done separately to track this.
 func compAtts(name string, oa, na AttMap) {
-	allAttMap := make(map[string]bool)
-
-	for k, _ := range oa {
-		allAttMap[k] = true
-	}
-	for k, _ := range na {
-		allAttMap[k] = true
-	}
-
-	delete(allAttMap, "ctime")
-	delete(allAttMap, "ino")
-
-	// Sort the whole attribute list.
-	allAtts := make([]string, 0, len(allAttMap))
-	for k, _ := range allAttMap {
-		allAtts = append(allAtts, k)
-	}
-	sort.Sort(sort.StringSlice(allAtts))
-
 	var mismatch []string
 
-	for _, k := range allAtts {
-		ov, ook := oa[k]
-		nv, nok := na[k]
-		switch {
-		case ook && !nok:
-			warnAtt(k, "removed")
-		case !ook && nok:
-			warnAtt(k, "added")
-		default:
-			if ov != nv {
-				mismatch = append(mismatch, k)
-			}
-		}
+	if oa.Devmaj != na.Devmaj || oa.Devmin != na.Devmin {
+		mismatch = append(mismatch, "dev")
+	}
+	if oa.Gid != na.Gid {
+		mismatch = append(mismatch, "gid")
+	}
+	if oa.Kind != na.Kind {
+		mismatch = append(mismatch, "kind")
+	}
+	if oa.Mtime != na.Mtime {
+		mismatch = append(mismatch, "mtime")
+	}
+	if oa.Perm != na.Perm {
+		mismatch = append(mismatch, "perm")
+	}
+	if !bytes.Equal(oa.Sha, na.Sha) {
+		mismatch = append(mismatch, "sha1")
+	}
+	if oa.Size != na.Size {
+		mismatch = append(mismatch, "size")
+	}
+	if oa.Targ != na.Targ {
+		mismatch = append(mismatch, "targ")
+	}
+	if oa.Uid != na.Uid {
+		mismatch = append(mismatch, "uid")
 	}
 
 	if len(mismatch) == 0 {

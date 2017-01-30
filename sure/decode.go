@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
+	"syscall"
 )
 
 // Load a surefile from an external file.
@@ -194,7 +196,7 @@ func readAtts(buf *bufio.Reader) (atts AttMap, err error) {
 		return
 	}
 
-	atts = make(AttMap)
+	var tmpu uint64
 	for {
 		var p []byte
 		p, err = buf.Peek(1)
@@ -219,8 +221,87 @@ func readAtts(buf *bufio.Reader) (atts AttMap, err error) {
 			return
 		}
 
-		atts[key] = value
+		switch key {
+		case "kind":
+			val, ok := allKinds[value]
+			if !ok {
+				warnAtt(value, "Unknown file kind")
+			} else {
+				atts.Kind = val
+			}
+		case "uid":
+			tmpu, err = strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return
+			}
+			atts.Uid = uint32(tmpu)
+		case "gid":
+			tmpu, err = strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return
+			}
+			atts.Gid = uint32(tmpu)
+		case "perm":
+			tmpu, err = strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return
+			}
+			atts.Perm = uint32(tmpu)
+		case "devmaj":
+			tmpu, err = strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return
+			}
+			atts.Devmaj = uint32(tmpu)
+		case "devmin":
+			tmpu, err = strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return
+			}
+			atts.Devmin = uint32(tmpu)
+		case "mtime":
+			atts.Mtime, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return
+			}
+		case "ctime":
+			atts.Ctime, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return
+			}
+		case "ino":
+			atts.Ino, err = strconv.ParseUint(value, 10, 64)
+			if err != nil {
+				return
+			}
+		case "size":
+			atts.Size, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return
+			}
+		case "sha1":
+			_, err = fmt.Sscanf(value, "%x", &atts.Sha)
+			if err != nil {
+				return
+			}
+		case "targ":
+			atts.Targ = value
+		default:
+			warnAtt(key, "Unknown attribute")
+		}
 	}
+}
+
+var allKinds = make(map[string]uint32)
+
+func init() {
+	allKinds["dir"] = syscall.S_IFDIR
+	allKinds["file"] = syscall.S_IFREG
+	allKinds["lnk"] = syscall.S_IFLNK
+	allKinds["fifo"] = syscall.S_IFIFO
+	allKinds["sock"] = syscall.S_IFSOCK
+	allKinds["chr"] = syscall.S_IFCHR
+	allKinds["blk"] = syscall.S_IFBLK
 }
 
 func mustRead(buf *bufio.Reader, expect byte) (err error) {
