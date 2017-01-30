@@ -62,7 +62,7 @@ func main() {
 
 	fl = delta.Flags()
 	fl.IntVarP(&deltaLines, "lines", "l", 100, "# lines in data file")
-	fl.IntVarP(&deltaDeltas, "deltas", "d", 2, "# Deltas to test")
+	fl.IntVarP(&deltaDeltas, "deltas", "d", 100, "# Deltas to test")
 
 	root.AddCommand(delta)
 
