@@ -351,13 +351,13 @@ func init() {
 var kindToType = make(map[string]reflect.Type)
 
 func init() {
-	kindToType["dir"] = reflect.TypeOf(DirAtts{})
-	kindToType["file"] = reflect.TypeOf(RegAtts{})
-	kindToType["lnk"] = reflect.TypeOf(LinkAtts{})
-	kindToType["fifo"] = reflect.TypeOf(FifoAtts{})
-	kindToType["sock"] = reflect.TypeOf(FifoAtts{})
-	kindToType["chr"] = reflect.TypeOf(DevAtts{})
-	kindToType["blk"] = reflect.TypeOf(DevAtts{})
+	kindToType["dir"] = reflect.TypeOf((*DirAtts)(nil)).Elem()
+	kindToType["file"] = reflect.TypeOf((*RegAtts)(nil)).Elem()
+	kindToType["lnk"] = reflect.TypeOf((*LinkAtts)(nil)).Elem()
+	kindToType["fifo"] = reflect.TypeOf((*FifoAtts)(nil)).Elem()
+	kindToType["sock"] = reflect.TypeOf((*FifoAtts)(nil)).Elem()
+	kindToType["chr"] = reflect.TypeOf((*DevAtts)(nil)).Elem()
+	kindToType["blk"] = reflect.TypeOf((*DevAtts)(nil)).Elem()
 }
 
 func mustRead(buf *bufio.Reader, expect byte) (err error) {
