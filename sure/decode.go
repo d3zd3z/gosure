@@ -251,6 +251,12 @@ func decodeAtts(allAtts map[string]string) (AttMap, error) {
 		return nil, err
 	}
 
+	delete(allAtts, "kind")
+
+	for k := range allAtts {
+		warnAtt(k, "decode")
+	}
+
 	return itemPtr.Interface().(AttMap), nil
 }
 
@@ -287,7 +293,8 @@ func decWalk(v reflect.Value, atts map[string]string) error {
 			warnAtt(name, "decWalk")
 			continue
 		}
-		_ = value
+
+		delete(atts, name)
 
 		switch fld.Interface().(type) {
 		case uint32:

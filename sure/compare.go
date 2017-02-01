@@ -175,5 +175,12 @@ func compAttWalk(ov, nv reflect.Value, mismatch []string) []string {
 	return mismatch
 }
 
+var warnedAtts map[string]bool = make(map[string]bool)
+
 func warnAtt(key, kind string) {
+	kk := key + kind
+	if !warnedAtts[kk] {
+		log.Printf("Unexpected attribute: %q, %q", key, kind)
+		warnedAtts[kk] = true
+	}
 }
