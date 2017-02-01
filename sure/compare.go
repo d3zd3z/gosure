@@ -3,7 +3,9 @@ package sure
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 )
@@ -94,40 +96,83 @@ func compFiles(older, newer []*File, name string) {
 func compAtts(name string, oa, na AttMap) {
 	var mismatch []string
 
-	if oa.Devmaj != na.Devmaj || oa.Devmin != na.Devmin {
-		mismatch = append(mismatch, "dev")
-	}
-	if oa.Gid != na.Gid {
-		mismatch = append(mismatch, "gid")
-	}
-	if oa.Kind != na.Kind {
+	ov := reflect.ValueOf(oa).Elem()
+	nv := reflect.ValueOf(na).Elem()
+
+	if ov.Type() != nv.Type() {
 		mismatch = append(mismatch, "kind")
-	}
-	if oa.Mtime != na.Mtime {
-		mismatch = append(mismatch, "mtime")
-	}
-	if oa.Perm != na.Perm {
-		mismatch = append(mismatch, "perm")
-	}
-	if !bytes.Equal(oa.Sha, na.Sha) {
-		mismatch = append(mismatch, "sha1")
-	}
-	if oa.Size != na.Size {
-		mismatch = append(mismatch, "size")
-	}
-	if oa.Targ != na.Targ {
-		mismatch = append(mismatch, "targ")
-	}
-	if oa.Uid != na.Uid {
-		mismatch = append(mismatch, "uid")
+	} else {
+		mismatch = compAttWalk(ov, nv, nil)
 	}
 
 	if len(mismatch) == 0 {
 		return
 	}
 
+	sort.Sort(sort.StringSlice(mismatch))
+
 	attText := strings.Join(mismatch, ",")
 	fmt.Printf("  [%-20s] %s\n", attText, name)
+}
+
+// Walk through the structures (which are assumed to be the same
+// type), and compare all of the items.
+func compAttWalk(ov, nv reflect.Value, mismatch []string) []string {
+	t := ov.Type()
+	nField := t.NumField()
+
+	for i := 0; i < nField; i++ {
+		ofld := ov.Field(i)
+		nfld := nv.Field(i)
+		ftyp := t.Field(i)
+
+		// Walk down the struct
+		if ftyp.Type.Kind() == reflect.Struct {
+			mismatch = compAttWalk(ofld, nfld, mismatch)
+			continue
+		}
+
+		name := strings.ToLower(ftyp.Name)
+
+		// Special case to ignore ctime and ino.
+		if name == "ctime" || name == "ino" {
+			continue
+		}
+
+		bad := false
+
+		// Type based comparison.
+		switch ofld.Interface().(type) {
+		case uint32:
+			if ofld.Uint() != nfld.Uint() {
+				bad = true
+			}
+		case uint64:
+			if ofld.Uint() != nfld.Uint() {
+				bad = true
+			}
+		case int64:
+			if ofld.Int() != nfld.Int() {
+				bad = true
+			}
+		case []byte:
+			if bytes.Compare(ofld.Bytes(), nfld.Bytes()) != 0 {
+				bad = true
+			}
+		case string:
+			if ofld.String() != nfld.String() {
+				bad = true
+			}
+		default:
+			log.Fatalf("unknown field type: %v", ftyp)
+		}
+
+		if bad {
+			mismatch = append(mismatch, strings.ToLower(ftyp.Name))
+		}
+	}
+
+	return mismatch
 }
 
 func warnAtt(key, kind string) {

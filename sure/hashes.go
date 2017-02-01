@@ -3,7 +3,6 @@ package sure
 import (
 	"log"
 	"path"
-	"syscall"
 
 	"davidb.org/code/gosure/sha"
 )
@@ -24,14 +23,10 @@ func (t *Tree) EstimateHashes() Estimate {
 func (e *Estimate) update(t *Tree) {
 	// Account for any files in this tree.
 	for _, f := range t.Files {
-		if f.Atts.Sha == nil {
-			if f.Atts.Kind != syscall.S_IFREG {
-				// Only regular files are considered
-				// for hashing.
-				continue
-			}
+		atts, ok := f.Atts.(*RegAtts)
+		if ok && atts.Sha1 == nil {
 			e.Files += 1
-			e.Bytes += uint64(f.Atts.Size)
+			e.Bytes += uint64(atts.Size)
 		}
 	}
 
@@ -49,14 +44,15 @@ func (t *Tree) ComputeHashes(prog *Progress) {
 
 func (t *Tree) hashWalk(prog *Progress, name string) {
 	for _, f := range t.Files {
-		if f.Atts.Kind == syscall.S_IFREG && f.Atts.Sha == nil {
+		atts, ok := f.Atts.(*RegAtts)
+		if ok && atts.Sha1 == nil {
 			hash, err := sha.HashFile(path.Join(name, f.Name))
 			if err != nil {
 				log.Printf("Unable to hash file: %v", err)
 				continue
 			}
-			f.Atts.Sha = hash
-			prog.Update(1, uint64(f.Atts.Size))
+			atts.Sha1 = hash
+			prog.Update(1, uint64(atts.Size))
 		}
 	}
 

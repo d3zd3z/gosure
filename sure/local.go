@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
 	"syscall"
 
 	"davidb.org/code/gosure/linuxdir"
@@ -67,33 +66,54 @@ func getAtts(name string, info os.FileInfo) AttMap {
 	var atts AttMap
 	sys := info.Sys().(*syscall.Stat_t)
 
-	atts.Kind = sys.Mode & syscall.S_IFMT
 	switch sys.Mode & syscall.S_IFMT {
 	case syscall.S_IFDIR:
-		basePerms(&atts, sys)
+		dirAtts := &DirAtts{}
+		basePerms(&dirAtts.Base, sys)
+		atts = dirAtts
 	case syscall.S_IFREG:
-		basePerms(&atts, sys)
-		timeInfo(&atts, sys)
-		atts.Ino = sys.Ino
-		atts.Size = sys.Size
+		regAtts := &RegAtts{
+			Mtime: sys.Mtim.Sec,
+			Ctime: sys.Ctim.Sec,
+			Ino:   sys.Ino,
+			Size:  sys.Size,
+		}
+		basePerms(&regAtts.Base, sys)
+		atts = regAtts
 	case syscall.S_IFLNK:
+		lnkAtts := &LinkAtts{}
 		target, err := os.Readlink(name)
 		if err != nil {
 			log.Printf("Error reading symlink: %v", err)
 		} else {
-			atts.Targ = target
+			lnkAtts.Targ = target
 		}
+		atts = lnkAtts
 	case syscall.S_IFIFO:
-		basePerms(&atts, sys)
+		fifoAtts := &FifoAtts{Kind: S_IFIFO}
+		basePerms(&fifoAtts.Base, sys)
+		atts = fifoAtts
 	case syscall.S_IFSOCK:
-		basePerms(&atts, sys)
+		fifoAtts := &FifoAtts{Kind: S_IFSOCK}
+		basePerms(&fifoAtts.Base, sys)
+		atts = fifoAtts
 	case syscall.S_IFCHR:
-		basePerms(&atts, sys)
-		devInfo(&atts, sys)
+		devAtts := &DevAtts{
+			Kind:   S_IFCHR,
+			Devmaj: uint32(linuxdir.Major(sys.Rdev)),
+			Devmin: uint32(linuxdir.Minor(sys.Rdev)),
+		}
+		basePerms(&devAtts.Base, sys)
+		atts = devAtts
 		// TODO: These should have time info on them?
 	case syscall.S_IFBLK:
-		basePerms(&atts, sys)
-		devInfo(&atts, sys)
+		devAtts := &DevAtts{
+			Kind:   S_IFBLK,
+			Devmaj: uint32(linuxdir.Major(sys.Rdev)),
+			Devmin: uint32(linuxdir.Minor(sys.Rdev)),
+		}
+		basePerms(&devAtts.Base, sys)
+		atts = devAtts
 	default:
 		log.Printf("Node: %+v", info)
 		panic("Unexpected file type")
@@ -103,32 +123,13 @@ func getAtts(name string, info os.FileInfo) AttMap {
 }
 
 // Base permissions shared by most nodes
-func basePerms(atts *AttMap, sys *syscall.Stat_t) {
+func basePerms(atts *BaseAtts, sys *syscall.Stat_t) {
 	atts.Uid = sys.Uid
 	atts.Gid = sys.Gid
 	atts.Perm = permission(sys)
 }
 
-func devInfo(atts *AttMap, sys *syscall.Stat_t) {
-	atts.Devmaj = uint32(linuxdir.Major(sys.Rdev))
-	atts.Devmin = uint32(linuxdir.Minor(sys.Rdev))
-}
-
-func timeInfo(atts *AttMap, sys *syscall.Stat_t) {
-	// TODO: Store sub-second times.
-	atts.Mtime = sys.Mtim.Sec
-	atts.Ctime = sys.Ctim.Sec
-}
-
 // The Permission() call in 'os' masks off too many bits.
 func permission(sys *syscall.Stat_t) uint32 {
 	return sys.Mode &^ syscall.S_IFMT
-}
-
-func i64toa(i int64) string {
-	return strconv.FormatInt(i, 10)
-}
-
-func u64toa(i uint64) string {
-	return strconv.FormatUint(i, 10)
 }

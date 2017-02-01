@@ -1,14 +1,10 @@
 package sure
 
-import (
-	"syscall"
-)
-
 // Notice: there is a fairly strong assumption that this tool will not
 // be used to cross filesystems.  We don't store device numbers and
 // can't distinguish inodes from different filesystems.
 
-type inoMap map[uint64]*AttMap
+type inoMap map[uint64]*RegAtts
 
 // Migrate hashes from oldTree to newTree.  Any files that are the
 // same in the oldTree as the newTree will have their hash migrated to
@@ -32,13 +28,10 @@ func getHashes(tree *Tree, hashes inoMap) {
 
 	// Then the file nodes.
 	for _, f := range tree.Files {
-		// Only attend to ones with a 'sha1' property.
-		if f.Atts.Sha == nil {
-			continue
-		}
+		atts, ok := f.Atts.(*RegAtts)
 
-		// And only those that are regular files.
-		if f.Atts.Kind != syscall.S_IFREG {
+		// Only attend to ones with a 'sha1' property.
+		if !ok || atts.Sha1 == nil {
 			continue
 		}
 
@@ -48,7 +41,7 @@ func getHashes(tree *Tree, hashes inoMap) {
 		// Come up with a way of dealing with this or just
 		// warning.
 
-		hashes[f.Atts.Ino] = &f.Atts
+		hashes[atts.Ino] = atts
 	}
 }
 
@@ -61,21 +54,23 @@ func updateHashes(tree *Tree, hashes inoMap) {
 
 	// Then the file nodes.
 	for _, f := range tree.Files {
-		if f.Atts.Kind != syscall.S_IFREG {
+		atts, ok := f.Atts.(*RegAtts)
+
+		if !ok {
 			continue
 		}
 
-		oldAtt, ok := hashes[f.Atts.Ino]
+		oldAtt, ok := hashes[atts.Ino]
 		if !ok {
 			continue
 		}
 
 		// For sanity, make sure the ctime, and size are the
 		// same.
-		if oldAtt.Ctime != f.Atts.Ctime || oldAtt.Size != f.Atts.Size {
+		if oldAtt.Ctime != atts.Ctime || oldAtt.Size != atts.Size {
 			continue
 		}
 
-		f.Atts.Sha = oldAtt.Sha
+		atts.Sha1 = oldAtt.Sha1
 	}
 }

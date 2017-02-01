@@ -5,6 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
+	"reflect"
+	"sort"
+	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -71,49 +76,80 @@ func encodeAtts(atts AttMap) string {
 	// The attributes present must match those set by the local
 	// value, since zero is valid for many of these.
 
-	isReg := atts.Kind == syscall.S_IFREG
-	hasTime := atts.Kind == syscall.S_IFREG
-	hasDev := atts.Kind == syscall.S_IFCHR || atts.Kind == syscall.S_IFBLK
-	isLink := atts.Kind == syscall.S_IFLNK
+	v := reflect.ValueOf(atts)
+	v = v.Elem()
 
-	if hasTime {
-		fmt.Fprintf(&buf, "ctime %d ", atts.Ctime)
+	alist := []stringPair{
+		{
+			key:   "kind",
+			value: atts.GetKind(),
+		},
 	}
-	if hasDev {
-		fmt.Fprintf(&buf, "devmaj %d ", atts.Devmaj)
-		fmt.Fprintf(&buf, "devmin %d ", atts.Devmin)
-	}
-	if !isLink {
-		fmt.Fprintf(&buf, "gid %d ", atts.Gid)
-		fmt.Fprintf(&buf, "ino %d ", atts.Ino)
-	}
+	alist = encWalk(v, alist)
 
-	ktext, ok := kindNames[atts.Kind]
-	if !ok {
-		panic("Invalid kind")
-	}
-	fmt.Fprintf(&buf, "kind %s ", ktext)
+	sort.Sort(stringPairSlice(alist))
 
-	if hasTime {
-		fmt.Fprintf(&buf, "mtime %d ", atts.Mtime)
-	}
-	if !isLink {
-		fmt.Fprintf(&buf, "perm %d ", atts.Perm)
-	}
-	if isReg && atts.Sha != nil {
-		fmt.Fprintf(&buf, "sha1 %x ", atts.Sha)
-	}
-	if isReg {
-		fmt.Fprintf(&buf, "size %d ", atts.Size)
-	}
-	if isLink {
-		fmt.Fprintf(&buf, "targ %s ", escapeString(atts.Targ))
-	}
-	if !isLink {
-		fmt.Fprintf(&buf, "uid %d ", atts.Uid)
+	for _, p := range alist {
+		fmt.Fprintf(&buf, "%s %s ", p.key, p.value)
 	}
 
 	return buf.String()
+}
+
+func encWalk(v reflect.Value, atts []stringPair) []stringPair {
+	t := v.Type()
+	nField := t.NumField()
+
+	for i := 0; i < nField; i++ {
+		fld := v.Field(i)
+		ftyp := t.Field(i)
+
+		// Flatten structs.
+		if ftyp.Type.Kind() == reflect.Struct {
+			atts = encWalk(fld, atts)
+			continue
+		}
+
+		name := strings.ToLower(ftyp.Name)
+
+		if name == "kind" {
+			continue
+		}
+
+		switch v := fld.Interface().(type) {
+		case uint32:
+			atts = append(atts, stringPair{
+				key:   name,
+				value: strconv.FormatUint(uint64(v), 10),
+			})
+		case int64:
+			atts = append(atts, stringPair{
+				key:   name,
+				value: strconv.FormatInt(v, 10),
+			})
+		case uint64:
+			atts = append(atts, stringPair{
+				key:   name,
+				value: strconv.FormatUint(v, 10),
+			})
+		case []byte:
+			atts = append(atts, stringPair{
+				key:   name,
+				value: fmt.Sprintf("%x", v),
+			})
+		case string:
+			atts = append(atts, stringPair{
+				key:   name,
+				value: escapeString(v),
+			})
+		default:
+			log.Printf("%q, type: %v", ftyp.Name, ftyp.Type)
+			panic("Unknown type")
+		}
+
+	}
+
+	return atts
 }
 
 var kindNames = make(map[uint32]string)
