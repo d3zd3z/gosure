@@ -4,16 +4,17 @@ package sha
 
 import (
 	"io"
-	"os"
-	"syscall"
 )
 
 func HashFile(path string) (result []byte, err error) {
 	hash := NewSha1()
+	/*
 	file, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOATIME, 0)
 	if err != nil {
 		file, err = os.OpenFile(path, os.O_RDONLY, 0)
 	}
+	*/
+	file, err := openNoAtime(path)
 	if err != nil {
 		return
 	}

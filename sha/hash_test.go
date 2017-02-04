@@ -30,7 +30,12 @@ func TestFile(t *testing.T) {
 	// available.
 	h2text, err := exec.Command("sha1sum", name).Output()
 	if err != nil {
-		t.Fatal(err)
+		// Try the gsha1sum, which may be the case with
+		// homebrew.
+		h2text, err = exec.Command("gsha1sum", name).Output()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	fields := strings.Split(string(h2text), " ")
 	h2, err := hex.DecodeString(string(fields[0]))

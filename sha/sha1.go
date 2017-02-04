@@ -2,7 +2,9 @@
 
 package sha
 
-// #cgo pkg-config: libcrypto
+// #cgo !darwin pkg-config: libcrypto
+// #cgo darwin CFLAGS: -I/usr/local/opt/openssl/include
+// #cgo darwin LDFLAGS: -L/usr/local/opt/openssl/lib -lcrypto
 // #include <openssl/sha.h>
 import "C"
 import "unsafe"

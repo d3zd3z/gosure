@@ -5,7 +5,6 @@ package linuxdir
 // stat on some filesystems.
 
 // #include <sys/types.h>
-// #include <sys/sysmacros.h>
 // #include <dirent.h>
 import "C"
 

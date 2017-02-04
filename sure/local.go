@@ -72,9 +72,10 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		basePerms(&dirAtts.Base, sys)
 		atts = dirAtts
 	case syscall.S_IFREG:
+		mtime, ctime := getSysTimes(sys)
 		regAtts := &RegAtts{
-			Mtime: sys.Mtim.Sec,
-			Ctime: sys.Ctim.Sec,
+			Mtime: mtime,
+			Ctime: ctime,
 			Ino:   sys.Ino,
 			Size:  sys.Size,
 		}
@@ -100,7 +101,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 	case syscall.S_IFCHR:
 		devAtts := &DevAtts{
 			Kind: S_IFCHR,
-			Rdev: sys.Rdev,
+			Rdev: uint64(sys.Rdev),
 		}
 		basePerms(&devAtts.Base, sys)
 		atts = devAtts
@@ -108,7 +109,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 	case syscall.S_IFBLK:
 		devAtts := &DevAtts{
 			Kind: S_IFBLK,
-			Rdev: sys.Rdev,
+			Rdev: uint64(sys.Rdev),
 		}
 		basePerms(&devAtts.Base, sys)
 		atts = devAtts
@@ -129,5 +130,5 @@ func basePerms(atts *BaseAtts, sys *syscall.Stat_t) {
 
 // The Permission() call in 'os' masks off too many bits.
 func permission(sys *syscall.Stat_t) uint32 {
-	return sys.Mode &^ syscall.S_IFMT
+	return uint32(sys.Mode &^ syscall.S_IFMT)
 }
