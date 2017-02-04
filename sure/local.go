@@ -99,18 +99,16 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		atts = fifoAtts
 	case syscall.S_IFCHR:
 		devAtts := &DevAtts{
-			Kind:   S_IFCHR,
-			Devmaj: uint32(linuxdir.Major(sys.Rdev)),
-			Devmin: uint32(linuxdir.Minor(sys.Rdev)),
+			Kind: S_IFCHR,
+			Rdev: sys.Rdev,
 		}
 		basePerms(&devAtts.Base, sys)
 		atts = devAtts
 		// TODO: These should have time info on them?
 	case syscall.S_IFBLK:
 		devAtts := &DevAtts{
-			Kind:   S_IFBLK,
-			Devmaj: uint32(linuxdir.Major(sys.Rdev)),
-			Devmin: uint32(linuxdir.Minor(sys.Rdev)),
+			Kind: S_IFBLK,
+			Rdev: sys.Rdev,
 		}
 		basePerms(&devAtts.Base, sys)
 		atts = devAtts

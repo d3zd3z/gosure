@@ -73,10 +73,9 @@ func (a *FifoAtts) GetKind() string {
 
 // DevAtts is for block and character nodes.
 type DevAtts struct {
-	Kind   uint32
-	Base   BaseAtts
-	Devmaj uint32
-	Devmin uint32
+	Kind uint32
+	Base BaseAtts
+	Rdev uint64
 }
 
 func (a *DevAtts) GetKind() string {
