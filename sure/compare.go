@@ -3,20 +3,38 @@ package sure
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"path"
 	"reflect"
 	"sort"
 	"strings"
 )
 
+// The Comparer is a writer where the diffs between two trees will be
+// written.
+type Comparer struct {
+	write io.Writer
+}
+
+func NewComparer(w io.Writer) Comparer {
+	return Comparer{
+		write: w,
+	}
+}
+
 // Traverse an old tree and a new tree, printing out everything that
 // is different between them.
 func CompareTrees(older, newer *Tree) {
-	compWalk(older, newer, ".")
+	NewComparer(os.Stdout).CompareTrees(older, newer)
 }
 
-func compWalk(older, newer *Tree, name string) {
+func (w Comparer) CompareTrees(older, newer *Tree) {
+	w.compWalk(older, newer, ".")
+}
+
+func (w Comparer) compWalk(older, newer *Tree, name string) {
 	// First make a map of the old ones.
 	oldc := make(map[string]*Tree)
 
@@ -29,10 +47,10 @@ func compWalk(older, newer *Tree, name string) {
 		chname := path.Join(name, nch.Name)
 		if ok {
 			// Recursively compare the children.
-			compWalk(och, nch, chname)
+			w.compWalk(och, nch, chname)
 
 			// Compare the attributes.
-			compAtts(chname, och.Atts, nch.Atts)
+			w.compAtts(chname, och.Atts, nch.Atts)
 
 			// Remove this from the old list so we don't
 			// show it as deleted.
@@ -40,7 +58,7 @@ func compWalk(older, newer *Tree, name string) {
 		} else {
 			// Not present in old, this names a new
 			// directory.
-			fmt.Printf("+ %-22s %s\n", "dir", chname)
+			fmt.Fprintf(w.write, "+ %-22s %s\n", "dir", chname)
 		}
 	}
 
@@ -53,13 +71,13 @@ func compWalk(older, newer *Tree, name string) {
 
 	for _, subname := range oldNames {
 		chname := path.Join(name, subname)
-		fmt.Printf("- %-22s %s\n", "dir", chname)
+		fmt.Fprintf(w.write, "- %-22s %s\n", "dir", chname)
 	}
 
-	compFiles(older.Files, newer.Files, name)
+	w.compFiles(older.Files, newer.Files, name)
 }
 
-func compFiles(older, newer []*File, name string) {
+func (w Comparer) compFiles(older, newer []*File, name string) {
 	oldf := make(map[string]*File)
 
 	for _, ofi := range older {
@@ -70,10 +88,10 @@ func compFiles(older, newer []*File, name string) {
 		ofi, ok := oldf[nfi.Name]
 		chname := path.Join(name, nfi.Name)
 		if ok {
-			compAtts(chname, ofi.Atts, nfi.Atts)
+			w.compAtts(chname, ofi.Atts, nfi.Atts)
 			delete(oldf, ofi.Name)
 		} else {
-			fmt.Printf("+ %-22s %s\n", "file", chname)
+			fmt.Fprintf(w.write, "+ %-22s %s\n", "file", chname)
 		}
 	}
 
@@ -86,14 +104,14 @@ func compFiles(older, newer []*File, name string) {
 
 	for _, subname := range oldNames {
 		chname := path.Join(name, subname)
-		fmt.Printf("- %-22s %s\n", "file", chname)
+		fmt.Fprintf(w.write, "- %-22s %s\n", "file", chname)
 	}
 }
 
 // Compare attributes, and if any differ, print them out and the file
 // name.  Ignores attributes "ctime" and "ino" because these will not
 // be the same when restored from a backup.
-func compAtts(name string, oa, na AttMap) {
+func (w Comparer) compAtts(name string, oa, na AttMap) {
 	var mismatch []string
 
 	ov := reflect.ValueOf(oa).Elem()
@@ -112,7 +130,7 @@ func compAtts(name string, oa, na AttMap) {
 	sort.Sort(sort.StringSlice(mismatch))
 
 	attText := strings.Join(mismatch, ",")
-	fmt.Printf("  [%-20s] %s\n", attText, name)
+	fmt.Fprintf(w.write, "  [%-20s] %s\n", attText, name)
 }
 
 // Walk through the structures (which are assumed to be the same
