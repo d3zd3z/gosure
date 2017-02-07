@@ -27,7 +27,7 @@ func TestGenerate(t *testing.T) {
 		NewComparer(&compBuf).CompareTrees(tr, tr2)
 
 		if compBuf.Len() > 0 {
-			t.Log("delta output:\n%s", compBuf.String())
+			t.Logf("delta output:\n%s", compBuf.String())
 			t.Fatal("Trees differ")
 		}
 	}
