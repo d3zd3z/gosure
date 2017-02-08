@@ -6,14 +6,14 @@ import (
 	"io"
 )
 
+// HashFile computes the sha1 hash of the named file.  If successful,
+// the result will be a 20-byte string of hash data, otherwise err
+// will be set to the cause of the failure.
+//
+// On some platforms (notably Linux), this will try to not update the
+// atime on the file, so that it is still useful.
 func HashFile(path string) (result []byte, err error) {
-	hash := NewSha1()
-	/*
-	file, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOATIME, 0)
-	if err != nil {
-		file, err = os.OpenFile(path, os.O_RDONLY, 0)
-	}
-	*/
+	hash := newSha1()
 	file, err := openNoAtime(path)
 	if err != nil {
 		return
@@ -33,16 +33,16 @@ func HashFile(path string) (result []byte, err error) {
 			return
 		}
 
-		hash.Update(buffer[0:n])
+		hash.update(buffer[0:n])
 	}
 	putBuffer(buffer)
-	result = hash.Final()
+	result = hash.final()
 	return
 }
 
 // Keep a pool of buffers.  The size will be the number of potential
 // buffers in the pool.
-var bufPool chan []byte = make(chan []byte, 16)
+var bufPool = make(chan []byte, 16)
 
 // Fetch a buffer for use, allocating if the pool is empty.
 func getBuffer() []byte {

@@ -9,20 +9,21 @@ package sha
 import "C"
 import "unsafe"
 
-type ShaContext C.SHA_CTX
+type shaContext C.SHA_CTX
 
-func NewSha1() *ShaContext {
-	context := new(ShaContext)
+func newSha1() *shaContext {
+	context := new(shaContext)
 	C.SHA1_Init((*C.SHA_CTX)(context))
 	return context
 }
 
-// TODO: Is this pointer safe from GC?
-func (ctx *ShaContext) Update(data []byte) {
+// Note that the call is GC save as long as the arguments are inline,
+// and not stored in any variables.
+func (ctx *shaContext) update(data []byte) {
 	C.SHA1_Update((*C.SHA_CTX)(ctx), unsafe.Pointer(&data[0]), C.size_t(len(data)))
 }
 
-func (ctx *ShaContext) Final() []byte {
+func (ctx *shaContext) final() []byte {
 	result := make([]byte, C.SHA_DIGEST_LENGTH)
 	C.SHA1_Final((*C.uchar)(&result[0]), (*C.SHA_CTX)(ctx))
 	return result
