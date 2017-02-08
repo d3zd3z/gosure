@@ -10,36 +10,36 @@ import "C"
 
 import "unsafe"
 
-type Dir C.DIR
+type dir C.DIR
 
-func Open(name string) (result *Dir, err error) {
+func open(name string) (result *dir, err error) {
 	tmp, err := C.opendir(C.CString(name))
 	if err != nil {
 		return
 	}
 
-	result = (*Dir)(tmp)
+	result = (*dir)(tmp)
 	return
 }
 
-func (p *Dir) Close() {
+func (p *dir) close() {
 	C.closedir((*C.DIR)(p))
 }
 
-type Dirent struct {
+type dirent struct {
 	Name string
 	Ino  uint64
 }
 
 // TODO, change this to readdir_r.
-func (p *Dir) Readdir() (entry *Dirent, err error) {
+func (p *dir) readdir() (entry *dirent, err error) {
 	ent, err := C.readdir((*C.DIR)(p))
 	if ent == nil {
 		entry = nil
 		// TODO: Correctly determine eof.
 		return
 	}
-	entry = &Dirent{Ino: uint64(ent.d_ino)}
+	entry = &dirent{Ino: uint64(ent.d_ino)}
 
 	// Convert the name.
 	bytes := (*[10000]byte)(unsafe.Pointer(&ent.d_name[0]))

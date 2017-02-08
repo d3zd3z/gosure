@@ -4,6 +4,7 @@ package linuxdir_test
 
 import (
 	"io/ioutil"
+	"os"
 	"sort"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestDirs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sort.Sort((*linuxdir.NameSort)(&b))
+	sort.Sort((*nameSort)(&b))
 	t.Logf("Got %d entries", len(b))
 
 	if len(a) != len(b) {
@@ -38,3 +39,9 @@ func TestDirs(t *testing.T) {
 		}
 	}
 }
+
+type nameSort []os.FileInfo
+
+func (p nameSort) Len() int           { return len(p) }
+func (p nameSort) Less(i, j int) bool { return p[i].Name() < p[j].Name() }
+func (p nameSort) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
