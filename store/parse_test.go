@@ -36,7 +36,7 @@ var parseTests = []struct {
 		"/usr/bin", "fred", true,
 	}},
 	{"/usr/bin/fred", nil, store.Store{
-		"/usr/bin", "fred", true,
+		"/usr/bin", "fred", false,
 	}},
 	{"/usr/bin/bogus.ext", store.InvalidName("/usr/bin/bogus.ext"), store.Store{
 		"", "", false,

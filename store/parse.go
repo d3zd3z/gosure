@@ -33,13 +33,12 @@ func (s *Store) Parse(name string) error {
 		return NotDir(name)
 	}
 
-	plain := false
+	plain := true
 	base := path.Base(name)
 
 	if strings.HasSuffix(base, ".gz") {
 		base = base[:len(base)-3]
-	} else {
-		plain = true
+		plain = false
 	}
 
 	// Strip off the known suffixes.
@@ -48,6 +47,10 @@ func (s *Store) Parse(name string) error {
 		base = base[:len(base)-4]
 	} else if ext != "" {
 		return InvalidName(name)
+	} else {
+		// If no extension was given, use compression by
+		// default.
+		plain = false
 	}
 
 	s.Path = dir
