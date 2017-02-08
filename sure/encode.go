@@ -133,6 +133,11 @@ func encWalk(v reflect.Value, atts []stringPair) []stringPair {
 				value: strconv.FormatUint(v, 10),
 			})
 		case []byte:
+			// Parser fails if there are no bytes output
+			if len(v) == 0 {
+				panic("Attribute " + name + " is empty")
+			}
+
 			atts = append(atts, stringPair{
 				key:   name,
 				value: fmt.Sprintf("%x", v),
