@@ -1,9 +1,7 @@
 package main
 
 import (
-	"compress/gzip"
 	"log"
-	"os"
 
 	"davidb.org/code/gosure/sure"
 
@@ -11,7 +9,7 @@ import (
 )
 
 func doUpdate(cmd *cobra.Command, args []string) {
-	oldTree, err := loadTree("2sure.dat.gz")
+	oldTree, err := storeArg.ReadDat()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,22 +20,9 @@ func doUpdate(cmd *cobra.Command, args []string) {
 	}
 
 	sure.MigrateHashes(oldTree, newTree)
-	hashSave(newTree)
-}
-
-func loadTree(name string) (tree *sure.Tree, err error) {
-	fd, err := os.Open(name)
+	hashUpdate(newTree)
+	err = storeArg.Write(newTree)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
-	defer fd.Close()
-
-	zfd, err := gzip.NewReader(fd)
-	if err != nil {
-		return
-	}
-	defer zfd.Close()
-
-	tree, err = sure.Decode(zfd)
-	return
 }

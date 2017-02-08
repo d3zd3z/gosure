@@ -72,3 +72,26 @@ type InvalidName string
 func (n InvalidName) Error() string {
 	return fmt.Sprintf("Path %q has an unknown extension", string(n))
 }
+
+// Implement 'Value' from spf13/pflag so the store can be directly
+// used as a command line argument.
+
+func (s *Store) String() string {
+	base := s.Base
+	if base == "" {
+		base = "2sure"
+	}
+	ext := ".gz"
+	if s.Plain {
+		ext = ""
+	}
+	return path.Join(s.Path, base+".dat"+ext)
+}
+
+func (s *Store) Set(value string) error {
+	return s.Parse(value)
+}
+
+func (s *Store) Type() string {
+	return "surefile path"
+}

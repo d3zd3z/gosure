@@ -5,12 +5,16 @@ import (
 	"log"
 	"os"
 
+	"davidb.org/code/gosure/store"
 	"github.com/spf13/cobra"
 )
 
 var scanDir string
+var storeArg store.Store
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	root := &cobra.Command{
 		Use:   "gosure command args ...",
 		Short: "File integrity management",
@@ -19,6 +23,9 @@ func main() {
 			log.Fatal("Invalid usage, TODO")
 		},
 	}
+
+	pf := root.PersistentFlags()
+	pf.VarP(&storeArg, "file", "f", "Surefile to write to")
 
 	scan := &cobra.Command{
 		Use:   "scan",
@@ -29,7 +36,7 @@ func main() {
 
 	root.AddCommand(scan)
 
-	pf := scan.PersistentFlags()
+	pf = scan.PersistentFlags()
 	pf.StringVarP(&scanDir, "dir", "d", ".", "Directory to scan")
 
 	update := &cobra.Command{

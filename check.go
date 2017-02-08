@@ -8,7 +8,7 @@ import (
 )
 
 func doCheck(cmd *cobra.Command, args []string) {
-	oldTree, err := loadTree("2sure.dat.gz")
+	oldTree, err := storeArg.ReadDat()
 	if err != nil {
 		log.Fatal(err)
 	}

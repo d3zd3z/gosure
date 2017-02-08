@@ -8,12 +8,12 @@ import (
 )
 
 func doSignoff(cmd *cobra.Command, args []string) {
-	oldTree, err := loadTree("2sure.bak.gz")
+	oldTree, err := storeArg.ReadBak()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	newTree, err := loadTree("2sure.dat.gz")
+	newTree, err := storeArg.ReadDat()
 	if err != nil {
 		log.Fatal(err)
 	}

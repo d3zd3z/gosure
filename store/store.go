@@ -60,16 +60,17 @@ func (s *Store) readNamed(name string) (*sure.Tree, error) {
 	}
 	defer f.Close()
 
-	var rd io.ReadCloser
+	var rd io.Reader
 	if s.Plain {
 		rd = f
 	} else {
-		rd, err = gzip.NewReader(f)
+		gz, err := gzip.NewReader(f)
 		if err != nil {
 			return nil, err
 		}
+		defer gz.Close()
+		rd = gz
 	}
-	defer rd.Close()
 
 	return sure.Decode(rd)
 }
