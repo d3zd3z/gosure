@@ -10,11 +10,13 @@ import (
 // SCCS conventions are not followed, because they are not safe (this
 // code will never write to a file that already exists).
 type NamingConvention interface {
-	// Create a temporary file for writing.  Upon success, returns
-	// the full path of the file, and the opened file for writing.
-	// The path will refer to a new file that did not exist before
-	// this call.  On error, `err` will be set to an error.
-	TempFile() (string, *os.File, error)
+	// Create a temporary file for writing.  `compressed`
+	// indicates if we've requested compression.
+	// Upon success, returns the full path of the file, and the
+	// opened file for writing.  The path will refer to a new file
+	// that did not exist before this call.  On error, `err` will
+	// be set to an error.
+	TempFile(compressed bool) (string, *os.File, error)
 
 	// Return the pathname of the primary file.
 	MainFile() string
@@ -38,26 +40,26 @@ type SimpleNaming struct {
 	Compressed bool   // Are these names to indicate compression.
 }
 
-func (sn *SimpleNaming) MakeName(ext string) string {
+func (sn *SimpleNaming) MakeName(ext string, compressed bool) string {
 	gz := ""
-	if sn.Compressed {
+	if sn.Compressed && compressed {
 		gz = ".gz"
 	}
 	return fmt.Sprintf("%s/%s.%s%s", sn.Path, sn.Base, ext, gz)
 }
 
 func (sn *SimpleNaming) MainFile() string {
-	return sn.MakeName(sn.Ext)
+	return sn.MakeName(sn.Ext, true)
 }
 
 func (sn *SimpleNaming) BackupFile() string {
-	return sn.MakeName("bak")
+	return sn.MakeName("bak", true)
 }
 
-func (sn *SimpleNaming) TempFile() (name string, file *os.File, err error) {
+func (sn *SimpleNaming) TempFile(compressed bool) (name string, file *os.File, err error) {
 	n := 0
 	for {
-		name := sn.MakeName(strconv.Itoa(n))
+		name := sn.MakeName(strconv.Itoa(n), compressed)
 
 		file, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 		if err == nil {

@@ -26,7 +26,7 @@ func TestTemps(t *testing.T) {
 
 	// Make sure we can create a bunch.
 	for i := 0; i < 10; i++ {
-		name1, file1, err := nam.TempFile()
+		name1, file1, err := nam.TempFile(true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -47,7 +47,7 @@ func TestInvalidName(t *testing.T) {
 		Compressed: true,
 	}
 
-	_, _, err := nam.TempFile()
+	_, _, err := nam.TempFile(true)
 	if err == nil {
 		t.Fatal("Should not have been able to create temp file")
 	}
