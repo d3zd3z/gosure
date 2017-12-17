@@ -114,3 +114,29 @@ files::
 
 will compare the old scan with the current, and report on what has
 changed between them.
+
+Weave Deltas
+************
+
+In addition to the above ``.dat`` and ``.bak`` versions, gosure has
+the ability to store data in a weave delta format\ [#].
+
+.. [#] The weave format was developed by Marc Rochkind as part of the
+   SCCS revision control system.  Although much of SCCS is dated, the
+   particular way it stores all file revisions in a single “weave”
+   file is particularly useful to the types of changes that happen to
+   surefiles.  Gosure uses the weave data format exactly as SCCS does,
+   but uses its own header.  The headers on SCCS have numerous
+   limitations that would render it less useful, such as file sizes
+   limited to 100,000 lines, and 2 year dates.
+
+The weave data is stored in files of the same names as above, however
+it is only necessary to keep the latest file, which contains the
+entire history.
+
+In order to create an initial weave file, add the ``--tag key=value``
+option to the command line.  Once this has been specified, it will be
+necessary to add tags to any updates (or there will be an error).  The
+tags are arbitrary key/value pairs, although both should be restricted
+to printable characters.  Each will also be annotated with the
+timestamp at the beginning of the scan.

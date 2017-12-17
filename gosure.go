@@ -11,6 +11,7 @@ import (
 
 var scanDir string
 var storeArg store.Store
+var tags = store.NewTags(&storeArg)
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -26,6 +27,7 @@ func main() {
 
 	pf := root.PersistentFlags()
 	pf.VarP(&storeArg, "file", "f", "Surefile to write to")
+	pf.VarP(&tags, "tag", "t", "Tags for new delta")
 
 	scan := &cobra.Command{
 		Use:   "scan",

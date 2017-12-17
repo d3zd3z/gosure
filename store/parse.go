@@ -1,6 +1,8 @@
 package store
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -97,4 +99,46 @@ func (s *Store) Set(value string) error {
 
 func (s *Store) Type() string {
 	return "surefile path"
+}
+
+// Wrap the store as a 'Value' to use the tags as a command line
+// argument.
+type Tags struct {
+	store *Store
+}
+
+func NewTags(store *Store) Tags {
+	return Tags{
+		store: store,
+	}
+}
+
+func (t Tags) String() string {
+	var buf bytes.Buffer
+
+	first := true
+	for k, v := range t.store.Tags {
+		if !first {
+			fmt.Fprintf(&buf, ", ")
+		}
+		first = false
+		fmt.Fprintf(&buf, "%s=%s", k, v)
+	}
+
+	return buf.String()
+}
+
+func (t Tags) Set(value string) error {
+	f := strings.SplitN(value, "=", 2)
+	if len(f) != 2 {
+		return errors.New("--tag value must contain an '='")
+	}
+
+	// TODO: Check for duplicates.
+	t.store.Tags[f[0]] = f[1]
+	return nil
+}
+
+func (t Tags) Type() string {
+	return "tags"
 }

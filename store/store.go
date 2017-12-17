@@ -15,13 +15,18 @@ import (
 // values will result in a the files "./2sure.dat.gz" and the likes
 // being used.
 type Store struct {
-	Path  string // The directory where the surefiles will be written.
-	Base  string // The initial part of the name.
-	Plain bool   // Plain indicates the files should not be compressed.
+	Path  string            // The directory where the surefiles will be written.
+	Base  string            // The initial part of the name.
+	Plain bool              // Plain indicates the files should not be compressed.
+	Tags  map[string]string // For delta stores, indicates tags for next delta written.
 }
 
 // Write the tree to the surefile, archiving a previous version.
 func (s *Store) Write(tree *sure.Tree) error {
+	if len(s.Tags) > 0 {
+		panic("TODO")
+	}
+
 	tname, err := s.writeTemp(tree)
 	if err != nil {
 		// Depending on where the failure happened, the file
