@@ -7,7 +7,7 @@ import (
 	"path"
 	"syscall"
 
-	"davidb.org/code/gosure/linuxdir"
+	"davidb.org/x/gosure/linuxdir"
 )
 
 // Walk a directory tree, generating a tree structure for it.  All

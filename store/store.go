@@ -1,4 +1,4 @@
-package store
+package store // import "davidb.org/x/gosure/store"
 
 import (
 	"compress/gzip"
@@ -8,7 +8,7 @@ import (
 	"path"
 	"strconv"
 
-	"davidb.org/code/gosure/sure"
+	"davidb.org/x/gosure/sure"
 )
 
 // The Store represents the current surefile store.  The default

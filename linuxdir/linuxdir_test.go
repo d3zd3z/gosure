@@ -8,7 +8,7 @@ import (
 	"sort"
 	"testing"
 
-	"davidb.org/code/gosure/linuxdir"
+	"davidb.org/x/gosure/linuxdir"
 )
 
 // Compare the output of the linuxdir call with our own manual loop

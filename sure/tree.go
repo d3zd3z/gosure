@@ -1,4 +1,4 @@
-package sure
+package sure // import "davidb.org/x/gosure/sure"
 
 import (
 	"syscall"

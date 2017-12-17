@@ -1,4 +1,4 @@
-package linuxdir
+package linuxdir // import "davidb.org/x/gosure/linuxdir"
 
 // Go's readdir doesn't return the inode number.  Sorting entries by
 // inode number before statting them can prevent lots of seeks during

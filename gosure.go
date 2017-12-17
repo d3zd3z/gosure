@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"davidb.org/code/gosure/store"
+	"davidb.org/x/gosure/store"
 	"github.com/spf13/cobra"
 )
 

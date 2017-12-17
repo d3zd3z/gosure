@@ -3,7 +3,7 @@ package store_test
 import (
 	"testing"
 
-	"davidb.org/code/gosure/store"
+	"davidb.org/x/gosure/store"
 )
 
 var parseTests = []struct {

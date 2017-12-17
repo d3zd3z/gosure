@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"davidb.org/code/gosure/sure"
+	"davidb.org/x/gosure/sure"
 )
 
 var generate = flag.Bool("generate", false, "Generate test tree save")

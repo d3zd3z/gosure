@@ -61,7 +61,7 @@ You should create a directory somewhere for go work, and set the
 environment variable ``GOPATH`` to point to this.  Once this is done,
 use the go tools to fetch this project::
 
-    $ go get davidb.org/code/gosure
+    $ go get davidb.org/x/gosure
 
 .. note::
    Although this project is hosted at github.com (currently), the go
@@ -72,7 +72,7 @@ use the go tools to fetch this project::
 
 Once the tree is present::
 
-    $ go install davidb.org/code/gosure
+    $ go install davidb.org/x/gosure
 
 should install the gosure program itself in ``$GOPATH/bin``.  Add this
 to the path to make things more convenient.  The execuable is

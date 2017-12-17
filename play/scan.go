@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"davidb.org/code/gosure/weave"
+	"davidb.org/x/gosure/weave"
 )
 
 type SccsFile struct {

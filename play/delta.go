@@ -15,7 +15,7 @@ import (
 	"strings"
 	"syscall"
 
-	"davidb.org/code/gosure/weave"
+	"davidb.org/x/gosure/weave"
 )
 
 var deltaLines int

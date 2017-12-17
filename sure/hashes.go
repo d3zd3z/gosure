@@ -4,7 +4,7 @@ import (
 	"log"
 	"path"
 
-	"davidb.org/code/gosure/sha"
+	"davidb.org/x/gosure/sha"
 )
 
 // A hash estimate

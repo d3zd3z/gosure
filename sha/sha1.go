@@ -1,6 +1,6 @@
 // Binding to openssl SHA1 function.
 
-package sha
+package sha // import "davidb.org/x/gosure/sha"
 
 // #cgo !darwin pkg-config: libcrypto
 // #cgo darwin CFLAGS: -I/usr/local/opt/openssl/include

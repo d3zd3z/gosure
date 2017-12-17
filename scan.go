@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"davidb.org/code/gosure/sure"
+	"davidb.org/x/gosure/sure"
 
 	"github.com/spf13/cobra"
 )

@@ -9,7 +9,7 @@ import (
 	"path"
 	"testing"
 
-	"davidb.org/code/gosure/sure"
+	"davidb.org/x/gosure/sure"
 )
 
 func TestTmpFile(t *testing.T) {

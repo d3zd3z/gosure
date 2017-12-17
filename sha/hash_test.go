@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"davidb.org/code/gosure/sha"
+	"davidb.org/x/gosure/sha"
 )
 
 func TestFile(t *testing.T) {
