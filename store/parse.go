@@ -135,6 +135,9 @@ func (t Tags) Set(value string) error {
 	}
 
 	// TODO: Check for duplicates.
+	if t.store.Tags == nil {
+		t.store.Tags = make(map[string]string)
+	}
 	t.store.Tags[f[0]] = f[1]
 	return nil
 }
