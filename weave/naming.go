@@ -10,13 +10,12 @@ import (
 // SCCS conventions are not followed, because they are not safe (this
 // code will never write to a file that already exists).
 type NamingConvention interface {
-	// Create a temporary file for writing.  `compressed`
-	// indicates if we've requested compression.
-	// Upon success, returns the full path of the file, and the
-	// opened file for writing.  The path will refer to a new file
-	// that did not exist before this call.  On error, `err` will
-	// be set to an error.
-	TempFile(compressed bool) (string, *os.File, error)
+	// Generate a temporary name.  The file may or may not exist
+	// (not checked).  If the name is already present, this can be
+	// called again with a different num to generate a different
+	// name.  Compressed is a hint as to whether this name should
+	// match compression.
+	TempFile(num int, compressed bool) string
 
 	// Return the pathname of the primary file.
 	MainFile() string
@@ -56,20 +55,25 @@ func (sn *SimpleNaming) BackupFile() string {
 	return sn.MakeName("bak", true)
 }
 
-func (sn *SimpleNaming) TempFile(compressed bool) (name string, file *os.File, err error) {
+func (sn *SimpleNaming) TempFile(num int, compressed bool) string {
+	return sn.MakeName(strconv.Itoa(num), compressed)
+}
+
+// MakeTemp will create a tempfile, the file, and an error.
+func TempFile(nc NamingConvention, compressed bool) (file *os.File, err error) {
 	n := 0
 	for {
-		name := sn.MakeName(strconv.Itoa(n), compressed)
+		name := nc.TempFile(n, compressed)
 
 		file, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 		if err == nil {
-			return name, file, nil
+			return file, nil
 		}
 
 		// Only continue if the error we get is because the
 		// file already exists.  Any other error is returned.
 		if !os.IsExist(err) {
-			return "", nil, err
+			return nil, err
 		}
 
 		n += 1
