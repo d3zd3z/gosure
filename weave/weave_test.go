@@ -1,7 +1,6 @@
 package weave_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,77 +13,34 @@ import (
 )
 
 func TestDeltas(t *testing.T) {
-	data := NewDataSet(100)
-
 	tdir, err := ioutil.TempDir("", "weave-test-")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(tdir)
 
-	sname := weave.SimpleNaming{
-		Path:       tdir,
-		Base:       "test",
-		Ext:        "weave",
-		Compressed: true,
-	}
+	data := NewDataSet(tdir, 100)
 
-	wr, err := weave.NewNewWeave(&sname, data.Name, data.Tags)
+	err = data.SaveNew()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = data.Save(wr)
+	err = data.Check(1)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	err = wr.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	hd, err := weave.ReadHeader(&sname)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(hd.Deltas) != 1 || hd.Deltas[0].Name != data.Name || !reflect.DeepEqual(hd.Deltas[0].Tags, data.Tags) {
-		enc := json.NewEncoder(os.Stdout)
-		enc.SetIndent("", "  ")
-		enc.Encode(hd)
-		t.Fatalf("Mismatch reading back delta header")
-	}
-
-	nums := make([]int, 0)
-	sink := func(line string) error {
-		num, err := strconv.Atoi(line)
-		if err != nil {
-			return err
-		}
-		nums = append(nums, num)
-		return nil
-	}
-	err = weave.ReadDelta(&sname, 1, sink)
-	if err == nil {
-		t.Fatalf("Unexpected empty return from ReadDelta")
-	}
-	if err != io.EOF {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(nums, data.Data) {
-		t.Fatalf("Mismatch reading nums:\ngot: %v\nExpect: %v\n", nums, data.Data)
 	}
 }
 
 type DataSet struct {
-	Data []int
-	Name string
-	Tags map[string]string
+	Data   []int
+	Name   string
+	Tags   map[string]string
+	NC     weave.SimpleNaming
+	Deltas map[int][]int
 }
 
-func NewDataSet(limit int) *DataSet {
+func NewDataSet(dir string, limit int) *DataSet {
 	nums := make([]int, limit)
 	for i := 0; i < limit; i++ {
 		nums[i] = i
@@ -97,10 +53,87 @@ func NewDataSet(limit int) *DataSet {
 		Data: nums,
 		Name: "initial",
 		Tags: tags,
+		NC: weave.SimpleNaming{
+			Path:       dir,
+			Base:       "test",
+			Ext:        "weave",
+			Compressed: true,
+		},
+		Deltas: make(map[int][]int),
 	}
 }
 
-func (d *DataSet) Save(w io.Writer) error {
+func (d *DataSet) SaveNew() error {
+	wr, err := weave.NewNewWeave(&d.NC, d.Name, d.Tags)
+	if err != nil {
+		return err
+	}
+	// Can't be deferred, because we need it closed to be able to
+	// read the header back.
+	// defer wr.Close()
+
+	err = d.SaveData(wr)
+	wr.Close()
+	if err != nil {
+		return err
+	}
+
+	// Verify the header.
+	hd, err := weave.ReadHeader(&d.NC)
+	if err != nil {
+		return err
+	}
+
+	if len(hd.Deltas) != 1 {
+		return fmt.Errorf("Expecting 1 delta not %d", len(hd.Deltas))
+	}
+
+	if hd.Deltas[0].Name != d.Name {
+		return fmt.Errorf("Delta name doesn't match %q != %q", hd.Deltas[0].Name, d.Name)
+	}
+
+	if !reflect.DeepEqual(hd.Deltas[0].Tags, d.Tags) {
+		return fmt.Errorf("Tags don't match %v != %v", hd.Deltas[0].Tags, d.Tags)
+	}
+
+	newNums := make([]int, len(d.Data))
+	copy(newNums, d.Data)
+	d.Deltas[1] = newNums
+
+	return nil
+}
+
+// Check the given delta against our notion of that delta.
+func (d *DataSet) Check(delta int) error {
+	expect, ok := d.Deltas[delta]
+	if !ok {
+		panic("Trying to check delta that hasn't been written")
+	}
+
+	nums := make([]int, 0)
+	err := weave.ReadDelta(&d.NC, delta, func(line string) error {
+		num, err := strconv.Atoi(line)
+		if err != nil {
+			return err
+		}
+		nums = append(nums, num)
+		return nil
+	})
+	if err == nil {
+		return fmt.Errorf("Unexpected empty return from ReadDelta")
+	}
+	if err != io.EOF {
+		return err
+	}
+
+	if !reflect.DeepEqual(nums, expect) {
+		return fmt.Errorf("Mismatch reading nums:\ngot: %v\nExpect: %v\n", nums, expect)
+	}
+
+	return nil
+}
+
+func (d *DataSet) SaveData(w io.Writer) error {
 	for _, num := range d.Data {
 		_, err := fmt.Fprintf(w, "%d\n", num)
 		if err != nil {
