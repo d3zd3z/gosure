@@ -7,27 +7,39 @@ import (
 	"os"
 )
 
+// weaveOpen opens a weave file for reading, based on a given naming
+// convention.  On success, returns the opened File, a reader on that
+// file (which will either be the same file, or a gzip.Reader), and
+// nil.  Otherwise, an error is returned
+func weaveOpen(nc NamingConvention) (*os.File, io.Reader, error) {
+	file, err := os.Open(nc.MainFile())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if nc.IsCompressed() {
+		gz, err := gzip.NewReader(file)
+		if err != nil {
+			file.Close()
+			return nil, nil, err
+		}
+		return file, gz, nil
+	}
+	return file, file, nil
+}
+
 // ReadHeader reads the header from the weave file described by the
 // naming convention.
 func ReadHeader(nc NamingConvention) (*Header, error) {
-	file, err := os.Open(nc.MainFile())
+	file, rd, err := weaveOpen(nc)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var rd BytesReader
-	if nc.IsCompressed() {
-		gz, err := gzip.NewReader(file)
-		if err != nil {
-			return nil, err
-		}
-		rd = bufio.NewReader(gz)
-	} else {
-		rd = bufio.NewReader(file)
-	}
+	bufrd := bufio.NewReader(rd)
 
-	return LoadHeader(rd)
+	return LoadHeader(bufrd)
 }
 
 // ReadDelta reads the contents of a given delta from a delta file.
@@ -41,27 +53,15 @@ func ReadDelta(nc NamingConvention, delta int, line func(text string) error) err
 
 // GeneralReader reads a delta using the specified Sink.
 func ReadGeneral(nc NamingConvention, delta int, sink Sink) error {
-	file, err := os.Open(nc.MainFile())
+	file, rd, err := weaveOpen(nc)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	var rd io.Reader
-	if nc.IsCompressed() {
-		gz, err := gzip.NewReader(file)
-		if err != nil {
-			return err
-		}
-		rd = gz
-	} else {
-		// The Parser will already wrap in a bufio.Reader, so no need
-		// to wrap here.
-		rd = file
-	}
-
-	p := NewParser(rd, sink, delta)
-	return p.ParseTo(0)
+	// The Parser will already wrap in a bufio.Reader, so no need
+	// to wrap here.
+	return NewParser(rd, sink, delta).ParseTo(0)
 }
 
 type deltaSink func(text string) error
