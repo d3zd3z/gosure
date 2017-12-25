@@ -12,34 +12,40 @@ var parseTests = []struct {
 	store store.Store
 }{
 	{"/invalid/path", store.NotDir("/invalid/path"), store.Store{
-		"", "", false, simpleTags(),
+		"", "", "", false, simpleTags(), "",
 	}},
 	{"/usr/bin", nil, store.Store{
-		"/usr/bin", "", false, simpleTags(),
+		"/usr/bin", "", "", false, simpleTags(), "",
 	}},
 	{"/usr/bin/2sure.dat.gz", nil, store.Store{
-		"/usr/bin", "2sure", false, simpleTags(),
+		"/usr/bin", "2sure", "", false, simpleTags(), "",
 	}},
 	{"/usr/bin/2sure.bak.gz", nil, store.Store{
-		"/usr/bin", "2sure", false, simpleTags(),
+		"/usr/bin", "2sure", "", false, simpleTags(), "",
 	}},
 	{"/usr/bin/2sure.dat", nil, store.Store{
-		"/usr/bin", "2sure", true, simpleTags(),
+		"/usr/bin", "2sure", "", true, simpleTags(), "",
 	}},
 	{"/usr/bin/2sure.bak", nil, store.Store{
-		"/usr/bin", "2sure", true, simpleTags(),
+		"/usr/bin", "2sure", "", true, simpleTags(), "",
 	}},
 	{"/usr/bin/fred.dat.gz", nil, store.Store{
-		"/usr/bin", "fred", false, simpleTags(),
+		"/usr/bin", "fred", "", false, simpleTags(), "",
 	}},
 	{"/usr/bin/fred.dat", nil, store.Store{
-		"/usr/bin", "fred", true, simpleTags(),
+		"/usr/bin", "fred", "", true, simpleTags(), "",
 	}},
 	{"/usr/bin/fred", nil, store.Store{
-		"/usr/bin", "fred", false, simpleTags(),
+		"/usr/bin", "fred", "", false, simpleTags(), "",
 	}},
 	{"/usr/bin/bogus.ext", store.InvalidName("/usr/bin/bogus.ext"), store.Store{
-		"", "", false, simpleTags(),
+		"", "", "", false, simpleTags(), "",
+	}},
+	{"/usr/bin/stuff.weave.gz", nil, store.Store{
+		"/usr/bin", "stuff", "weave", false, simpleTags(), "",
+	}},
+	{"/usr/bin/stuff.weave", nil, store.Store{
+		"/usr/bin", "stuff", "weave", true, simpleTags(), "",
 	}},
 }
 
