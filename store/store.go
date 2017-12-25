@@ -19,6 +19,7 @@ import (
 type Store struct {
 	Path  string            // The directory where the surefiles will be written.
 	Base  string            // The initial part of the name.
+	Ext   string            // The extension to use "normally dat"
 	Plain bool              // Plain indicates the files should not be compressed.
 	Tags  map[string]string // For delta stores, indicates tags for next delta written.
 	Name  string            // The name used to describe this capture.
@@ -229,7 +230,11 @@ func (s *Store) makeName(ext string, compressed bool) string {
 
 // datName returns the pathname for the primary dat file.
 func (s *Store) datName() string {
-	return s.makeName("dat", !s.Plain)
+	ext := "dat"
+	if s.Ext != "" {
+		ext = s.Ext
+	}
+	return s.makeName(ext, !s.Plain)
 }
 
 // bakName returns the pathname for the backup file.

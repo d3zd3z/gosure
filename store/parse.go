@@ -46,7 +46,10 @@ func (s *Store) Parse(name string) error {
 
 	// Strip off the known suffixes.
 	ext := path.Ext(base)
-	if ext == ".dat" || ext == ".bak" || ext == ".weave" {
+	if ext == ".weave" {
+		base = base[:len(base)-6]
+		s.Ext = "weave"
+	} else if ext == ".dat" || ext == ".bak" {
 		base = base[:len(base)-4]
 	} else if ext != "" {
 		return InvalidName(name)
