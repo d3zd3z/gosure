@@ -20,39 +20,16 @@ type Store struct {
 	Base  string            // The initial part of the name.
 	Plain bool              // Plain indicates the files should not be compressed.
 	Tags  map[string]string // For delta stores, indicates tags for next delta written.
+	Name  string            // The name used to describe this capture.
 }
 
-// Write the tree to the surefile, archiving a previous version.
+// Write writes a new version to the surefile.
 func (s *Store) Write(tree *sure.Tree) error {
-	if len(s.Tags) > 0 {
-		return s.WriteWeave(tree)
-	}
+	s.FixTags()
 
-	tname, err := s.writeTemp(tree)
-	if err != nil {
-		// Depending on where the failure happened, the file
-		// may have been written, so try to erase it, ignoring
-		// any error.
-		if tname != "" {
-			os.Remove(tname)
-		}
-		return err
-	}
+	// TODO: Check for an existing file and make a delta.
 
-	os.Rename(s.datName(), s.bakName())
-	err = os.Rename(tname, s.datName())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// WriteWeave writes a new weave file to the given store.  This will
-// wipe out any existing weave.
-func (s *Store) WriteWeave(tree *sure.Tree) error {
-	// TODO: Figure out 'name' part better.
-	wr, err := weave.NewNewWeave(s, "name", s.Tags)
+	wr, err := weave.NewNewWeave(s, s.Name, s.Tags)
 	if err != nil {
 		return err
 	}

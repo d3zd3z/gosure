@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 // Parse attempts to determine the parameters of the Store structure
@@ -45,7 +46,7 @@ func (s *Store) Parse(name string) error {
 
 	// Strip off the known suffixes.
 	ext := path.Ext(base)
-	if ext == ".dat" || ext == ".bak" {
+	if ext == ".dat" || ext == ".bak" || ext == ".weave" {
 		base = base[:len(base)-4]
 	} else if ext != "" {
 		return InvalidName(name)
@@ -144,4 +145,32 @@ func (t Tags) Set(value string) error {
 
 func (t Tags) Type() string {
 	return "tags"
+}
+
+// FixTags adjusts the tags appropriately after any options from the
+// user have been processed.  If 'name' is not given, it will have the
+// same value as time.  The name will be deleted from the tags, and
+// placed into the Name value in the struct.
+func (s *Store) FixTags() {
+	if s.Tags == nil {
+		s.Tags = make(map[string]string)
+	}
+
+	// To make this function idempotent, move the name back into
+	// the Tags list.
+	_, ok := s.Tags["name"]
+	if s.Name != "" && !ok {
+		s.Tags["name"] = s.Name
+		s.Name = ""
+	}
+
+	// If the name isn't set, use the time, otherwise extract from
+	// the explicitly given name field.
+	name, ok := s.Tags["name"]
+	if ok {
+		s.Name = name
+		delete(s.Tags, "name")
+	} else {
+		s.Name = time.Now().UTC().Format(time.RFC3339Nano)
+	}
 }
