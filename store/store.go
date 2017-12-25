@@ -137,6 +137,11 @@ func (s *Store) GetDelta(num int) (int, error) {
 	return num, nil
 }
 
+// ReadHeader attempts to read the header from the storefile.
+func (s *Store) ReadHeader() (*weave.Header, error) {
+	return weave.ReadHeader(s)
+}
+
 // Read a tree from the given pathname.
 func (s *Store) readNamed(name string) (*sure.Tree, error) {
 	f, err := os.Open(name)

@@ -66,6 +66,14 @@ func main() {
 
 	root.AddCommand(check)
 
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "List revisions in surefile",
+		Run:   doList,
+	}
+
+	root.AddCommand(list)
+
 	if err := root.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
