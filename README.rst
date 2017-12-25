@@ -106,9 +106,11 @@ Later, you can run ::
 
     $ gosure update
 
-which will move the ``2sure.dat.gz`` file to ``2sure.bak.gz``, and refresh
-the hashes of any files that have changed.  After you have these two
-files::
+which will update the sure data, adding another weave delta to the
+``2sure.dat.gz`` file.  The old file will be moved to
+``2sure.back.gz`` for safety (it is not normally needed as each file
+will have the whole history).  You can then compare the two most
+recent versions with:
 
     $ gosure signoff
 
@@ -118,8 +120,8 @@ changed between them.
 Weave Deltas
 ************
 
-In addition to the above ``.dat`` and ``.bak`` versions, gosure has
-the ability to store data in a weave delta format\ [#].
+Gosure uses the weave delta format\ [#] to store multiple versions in
+a single file.
 
 .. [#] The weave format was developed by Marc Rochkind as part of the
    SCCS revision control system.  Although much of SCCS is dated, the
@@ -130,13 +132,9 @@ the ability to store data in a weave delta format\ [#].
    limitations that would render it less useful, such as file sizes
    limited to 100,000 lines, and 2 year dates.
 
-The weave data is stored in files of the same names as above, however
-it is only necessary to keep the latest file, which contains the
-entire history.
-
-In order to create an initial weave file, add the ``--tag key=value``
-option to the command line.  Once this has been specified, it will be
-necessary to add tags to any updates (or there will be an error).  The
-tags are arbitrary key/value pairs, although both should be restricted
-to printable characters.  Each will also be annotated with the
-timestamp at the beginning of the scan.
+Each delta can have arbitrary metadata associated with it.  These
+values can be added with ``--tag key=value``.  The ``name`` key will
+override the default timestamp name.  It may be useful to indicate
+other information about when the scan was taken.  The tags are
+arbitrary key/value pairs, although both should be restricted to
+printable characters.
