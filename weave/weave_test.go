@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"reflect"
 	"strconv"
@@ -17,7 +18,10 @@ func TestDeltas(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tdir)
+	if true {
+		defer os.RemoveAll(tdir)
+	}
+	// fmt.Printf("tmp: %s\n", tdir)
 
 	data := NewDataSet(tdir, 100)
 
@@ -29,6 +33,19 @@ func TestDeltas(t *testing.T) {
 	err = data.Check(1)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	for i := 2; i < 100; i++ {
+		data.Scramble()
+		err = data.SaveDelta()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = data.Check(i)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -103,6 +120,35 @@ func (d *DataSet) SaveNew() error {
 	return nil
 }
 
+func (d *DataSet) SaveDelta() error {
+	base := len(d.Deltas)
+	wr, err := weave.NewDeltaWriter(&d.NC, base, d.Name, d.Tags)
+	if err != nil {
+		return err
+	}
+	err = d.SaveData(wr)
+	err2 := wr.Close()
+	if err != nil {
+		return err
+	}
+	if err2 != nil {
+		return err2
+	}
+
+	max := 0
+	for k := range d.Deltas {
+		if k > max {
+			max = k
+		}
+	}
+
+	newNums := make([]int, len(d.Data))
+	copy(newNums, d.Data)
+	d.Deltas[max+1] = newNums
+
+	return nil
+}
+
 // Check the given delta against our notion of that delta.
 func (d *DataSet) Check(delta int) error {
 	expect, ok := d.Deltas[delta]
@@ -131,6 +177,28 @@ func (d *DataSet) Check(delta int) error {
 	}
 
 	return nil
+}
+
+// Modify some of the data.  For now, just replace a sequence with
+// some new values.
+func (d *DataSet) Scramble() {
+	max := 0
+	for _, n := range d.Data {
+		if n > max {
+			max = n
+		}
+	}
+
+	a := rand.Intn(len(d.Data))
+	b := rand.Intn(len(d.Data))
+	if a > b {
+		a, b = b, a
+	}
+
+	for i := a; i <= b; i++ {
+		max++
+		d.Data[i] = max
+	}
 }
 
 func (d *DataSet) SaveData(w io.Writer) error {

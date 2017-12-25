@@ -29,35 +29,47 @@ type NewWeaveWriter struct {
 	delta int
 }
 
+// weaveCreate opens a new weave file for writing, writing the given
+// header to the file, and returning the file, and a bufferfed writer
+// (possibly with compression).
+func weaveCreate(nc NamingConvention, head *Header) (*os.File, io.WriteCloser, error) {
+	file, err := TempFile(nc, nc.IsCompressed())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var wr io.WriteCloser
+	if nc.IsCompressed() {
+		wr = gzip.NewWriter(file)
+	} else {
+		wr = closeWrite{bufio.NewWriter(file)}
+	}
+
+	err = head.Save(wr)
+	if err != nil {
+		file.Close()
+		os.Remove(file.Name())
+		return nil, nil, err
+	}
+
+	return file, wr, err
+}
+
 // NewWeave creates a new weave file.  The file will be named based on
 // the given naming convention.  The 'name' will be used for the
 // initial delta, and the tags will be recorded in that delta.  Close
 // must be called to finialize the weaving.  Note that the underlying
 // writer is buffered.
 func NewNewWeave(nc NamingConvention, name string, tags map[string]string) (*NewWeaveWriter, error) {
-	file, err := TempFile(nc, nc.IsCompressed())
-	if err != nil {
-		return nil, err
-	}
-
-	var w io.WriteCloser
-	if nc.IsCompressed() {
-		w = gzip.NewWriter(file)
-	} else {
-		w = closeWrite{bufio.NewWriter(file)}
-	}
-
 	head := NewHeader()
 	delta := head.AddDelta(name, tags)
 
-	err = head.Save(w)
+	file, wr, err := weaveCreate(nc, &head)
 	if err != nil {
-		file.Close()
-		os.Remove(file.Name())
 		return nil, err
 	}
 
-	_, err = fmt.Fprintf(w, "\x01I %d\n", delta)
+	_, err = fmt.Fprintf(wr, "\x01I %d\n", delta)
 	if err != nil {
 		file.Close()
 		os.Remove(file.Name())
@@ -66,11 +78,13 @@ func NewNewWeave(nc NamingConvention, name string, tags map[string]string) (*New
 
 	return &NewWeaveWriter{
 		file:  file,
-		w:     w,
+		w:     wr,
 		nc:    nc,
 		delta: delta,
 	}, nil
 }
+
+// writeWeave opens a temp weave file for writing,
 
 func (w *NewWeaveWriter) Write(p []byte) (n int, err error) {
 	return w.w.Write(p)
