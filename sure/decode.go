@@ -12,223 +12,205 @@ import (
 	"strings"
 )
 
-// Load a surefile from an external file.
+// Decode loads a surefile from an io.Reader.
 func Decode(r io.Reader) (*Tree, error) {
-	buf := bufio.NewReader(r)
+	rd := bufio.NewReader(r)
+	pd := NewPushDecoder()
+	for {
+		line, err := rd.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
 
-	line, err := buf.ReadString('\n')
-	if err != nil {
-		return nil, err
+		err = pd.add(line)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	if pd.result == nil || len(pd.tree) != 0 {
+		return nil, fmt.Errorf("Invalid ending state")
+	}
+
+	return pd.result, nil
+}
+
+// A PushDecoder is a stateful decoder that can be given a surefile
+// one line at a time, and generate the full tree.
+type PushDecoder struct {
+	// The method
+	add func(line string) error
+
+	// The tree as we are building it.
+	tree   []*Tree
+	result *Tree
+}
+
+func NewPushDecoder() *PushDecoder {
+	var pd PushDecoder
+	pd.add = pd.needAsure
+
+	return &pd
+}
+
+func (pd *PushDecoder) needAsure(line string) error {
 	if line != "asure-2.0\n" {
-		return nil, errors.New("Invalid magic")
+		return errors.New("Invalid Magic")
 	}
+	pd.add = pd.needHyphens
+	return nil
+}
 
-	line, err = buf.ReadString('\n')
-	if err != nil {
-		return nil, err
-	}
+func (pd *PushDecoder) needHyphens(line string) error {
 	if line != "-----\n" {
-		return nil, errors.New("Expecting '-----' delimiter line")
+		return errors.New("Invalid Magic")
 	}
-
-	return readTree(buf)
+	pd.add = pd.addDirs
+	return nil
 }
 
-func readTree(buf *bufio.Reader) (tree *Tree, err error) {
-	ch, err := buf.ReadByte()
-	if err != nil {
-		// Shouldn't ever get an EOF.
-		return
+func (pd *PushDecoder) addDirs(line string) error {
+	if len(line) == 0 {
+		return errors.New("Invalid blank line")
 	}
-	if ch != 'd' {
-		log.Fatalf("Expecting 'd' in surefile (got '%c')", ch)
-	}
-
-	name, err := readName(buf)
-	if err != nil {
-		return
-	}
-
-	atts, err := readAtts(buf)
-	if err != nil {
-		return
-	}
-
-	tree = &Tree{
-		Name: name,
-		Atts: atts,
-	}
-
-	// Read children until we get the '-' delimiter.
-	for {
-		var chs []byte
-		chs, err = buf.Peek(1)
+	if line[0] == 'd' {
+		// New subdirectory.
+		var newTree Tree
+		err := parseNameAtts(line[1:], &newTree.Name, &newTree.Atts)
 		if err != nil {
-			tree = nil
-			return
+			return err
 		}
-		if chs[0] == '-' {
-			break
-		}
+		pd.tree = append(pd.tree, &newTree)
 
-		var child *Tree
-		child, err = readTree(buf)
-		if err != nil {
-			tree = nil
-			return
-		}
-
-		tree.Children = append(tree.Children, child)
+		// Still processing a directory
+		return nil
 	}
 
-	line, err := buf.ReadString('\n')
-	if err != nil {
-		tree = nil
-		return
-	}
-	if line != "-\n" {
-		tree = nil
-		err = errors.New("Expecting '-\\n' line")
-		return
+	if line[0] == '-' {
+		// Done with this directory, add files to it.
+		pd.add = pd.addFiles
+		return nil
 	}
 
-	// Read the files.
-	for {
-		var chs []byte
-		chs, err = buf.Peek(1)
-		if err != nil {
-			tree = nil
-			return
-		}
-		if chs[0] == 'u' {
-			break
-		}
-
-		var file *File
-		file, err = readFile(buf)
-		if err != nil {
-			tree = nil
-			return
-		}
-
-		tree.Files = append(tree.Files, file)
-	}
-
-	line, err = buf.ReadString('\n')
-	if err != nil {
-		tree = nil
-		return
-	}
-	if line != "u\n" {
-		tree = nil
-		err = errors.New("Expecting 'u\\n' line")
-		return
-	}
-
-	return
+	return fmt.Errorf("Unexpected line in directory state: %q", line)
 }
 
-func readFile(buf *bufio.Reader) (file *File, err error) {
-	err = mustRead(buf, 'f')
-	if err != nil {
-		return
+func (pd *PushDecoder) addFiles(line string) error {
+	if len(line) == 0 {
+		return errors.New("Invalid blank line")
 	}
 
-	name, err := readName(buf)
-	if err != nil {
-		return
+	if line[0] == 'f' {
+		// New File.
+		tree := pd.tree[len(pd.tree)-1]
+
+		var newFile File
+		err := parseNameAtts(line[1:], &newFile.Name, &newFile.Atts)
+		if err != nil {
+			return err
+		}
+		tree.Files = append(tree.Files, &newFile)
+		return nil
 	}
 
-	atts, err := readAtts(buf)
-	if err != nil {
-		return
-	}
+	if line[0] == 'u' {
+		tree := pd.tree[len(pd.tree)-1]
+		pd.tree = pd.tree[:len(pd.tree)-1]
 
-	file = &File{
-		Name: name,
-		Atts: atts,
-	}
-	return
-}
-
-// Read a space delimited string from the input, reversing the quoted
-// printable encoding.
-func readName(buf *bufio.Reader) (name string, err error) {
-	raw, err := buf.ReadString(' ')
-	if err != nil {
-		return
-	}
-
-	if len(raw) == 0 || raw[len(raw)-1] != ' ' {
-		log.Fatal("Error reading name from surefile")
-	}
-	raw = raw[:len(raw)-1]
-
-	var out bytes.Buffer
-	i := 0
-	for i < len(raw) {
-		if raw[i] == '=' {
-			if i+3 > len(raw) {
-				log.Fatal("Encoded number beyond range")
-			}
-			var tmp uint64
-			tmp, err = strconv.ParseUint(raw[i+1:i+3], 16, 64)
-			if err != nil {
-				log.Fatal("Unable to decode hext number in '='")
-			}
-			out.WriteByte(byte(tmp))
-			i += 2
+		if len(pd.tree) == 0 {
+			// Last directory.
+			pd.add = pd.nothing
+			pd.result = tree
 		} else {
-			out.WriteByte(raw[i])
+			// Still inside a directory
+			pd.add = pd.addDirs
+			tf := pd.tree[len(pd.tree)-1]
+			tf.Children = append(tf.Children, tree)
 		}
-
-		i++
+		return nil
 	}
-	name = out.String()
-	return
+
+	return fmt.Errorf("Unexpected line in file state: %q", line)
 }
 
-// Reads the attributes, including the '[' and ']' characters and the
-// terminating line.
-func readAtts(buf *bufio.Reader) (atts AttMap, err error) {
-	err = mustRead(buf, '[')
+func (pd *PushDecoder) nothing(line string) error {
+	return fmt.Errorf("Unexpected line in eof state: %q", line)
+}
+
+// parseNameAtts parses the name and attributes from the encoded line,
+// and sets them.
+func parseNameAtts(line string, name *string, atts *AttMap) error {
+	i := 0
+	tname, err := scanName(line, &i)
 	if err != nil {
-		return
+		return err
 	}
+
+	*name = tname
+
+	if i >= len(line) || line[i] != '[' {
+		return fmt.Errorf("Expecting '['")
+	}
+	i++
 
 	allAtts := make(map[string]string)
 	for {
-		var p []byte
-		p, err = buf.Peek(1)
-		if err != nil {
-			return
+		if i >= len(line) {
+			return SyntaxError
 		}
-		if p[0] == ']' {
-			err = mustRead(buf, ']')
+		if line[i] == ']' {
+			at, err := decodeAtts(allAtts)
 			if err == nil {
-				err = mustRead(buf, '\n')
+				*atts = at
 			}
-			if err != nil {
-				return
-			}
-
-			return decodeAtts(allAtts)
+			return err
 		}
 
-		var key, value string
-		key, err = readName(buf)
+		key, err := scanName(line, &i)
 		if err != nil {
-			return
+			return err
 		}
-		value, err = readName(buf)
+		value, err := scanName(line, &i)
 		if err != nil {
-			return
+			return err
 		}
 
 		allAtts[key] = value
 	}
+
+	return nil
 }
+
+func scanName(line string, pos *int) (string, error) {
+	var out bytes.Buffer
+	i := *pos
+
+	for i < len(line) && line[i] != ' ' {
+		if line[i] == '=' {
+			if i+3 > len(line) {
+				return "", fmt.Errorf("Encoded number truncated")
+			}
+			tmp, err := strconv.ParseUint(line[i+1:i+3], 16, 8)
+			if err != nil {
+				return "", fmt.Errorf("Invalid hex number in '='")
+			}
+			out.WriteByte(byte(tmp))
+			i += 2
+		} else {
+			out.WriteByte(line[i])
+		}
+		i++
+	}
+	i++
+
+	*pos = i
+	return out.String(), nil
+}
+
+var SyntaxError = errors.New("Syntax error in surefile")
 
 // Given string value attributes as a map, decode them into the
 // desired structure.
