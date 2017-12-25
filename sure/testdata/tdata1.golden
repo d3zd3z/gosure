@@ -3,7 +3,7 @@ asure-2.0
 d__root__ [gid 54321 kind dir perm 493 uid 12345 ]
 -
 fregular=20file [ctime 1485993510 gid 2147483648 ino 1311768467463790320 kind file mtime 1485993509 perm 420 sha1 8f552e8f264d2a9c619bfcaa1f87f7b06c434582 size 5827423 uid 4294967295 ]
-fa=20symlink=ff [kind lnk targ =00=01=02=03=04=05=06=07=08=09=0a=0b=0c=0d=0e=0f=10=11=12=13=14=15=16=17=18=19=1a=1b=1c=1d=1e=1f=20!"#$%&'()*+,-./0123456789:;<=3d>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ=5b\=5d^_`abcdefghijklmnopqrstuvwxyz{|}~=7f=80=81=82=83=84=85=86=87=88=89=8a=8b=8c=8d=8e=8f=90=91=92=93=94=95=96=97=98=99=9a=9b=9c=9d=9e=9f=a0=a1=a2=a3=a4=a5=a6=a7=a8=a9=aa=ab=ac=ad=ae=af=b0=b1=b2=b3=b4=b5=b6=b7=b8=b9=ba=bb=bc=bd=be=bf=c0=c1=c2=c3=c4=c5=c6=c7=c8=c9=ca=cb=cc=cd=ce=cf=d0=d1=d2=d3=d4=d5=d6=d7=d8=d9=da=db=dc=dd=de=df=e0=e1=e2=e3=e4=e5=e6=e7=e8=e9=ea=eb=ec=ed=ee=ef=f0=f1=f2=f3=f4=f5=f6=f7=f8=f9=fa=fb=fc=fd=fe=ff ]
+fa=20symlink=ff [gid 0 kind lnk perm 0 targ =00=01=02=03=04=05=06=07=08=09=0a=0b=0c=0d=0e=0f=10=11=12=13=14=15=16=17=18=19=1a=1b=1c=1d=1e=1f=20!"#$%&'()*+,-./0123456789:;<=3d>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ=5b\=5d^_`abcdefghijklmnopqrstuvwxyz{|}~=7f=80=81=82=83=84=85=86=87=88=89=8a=8b=8c=8d=8e=8f=90=91=92=93=94=95=96=97=98=99=9a=9b=9c=9d=9e=9f=a0=a1=a2=a3=a4=a5=a6=a7=a8=a9=aa=ab=ac=ad=ae=af=b0=b1=b2=b3=b4=b5=b6=b7=b8=b9=ba=bb=bc=bd=be=bf=c0=c1=c2=c3=c4=c5=c6=c7=c8=c9=ca=cb=cc=cd=ce=cf=d0=d1=d2=d3=d4=d5=d6=d7=d8=d9=da=db=dc=dd=de=df=e0=e1=e2=e3=e4=e5=e6=e7=e8=e9=ea=eb=ec=ed=ee=ef=f0=f1=f2=f3=f4=f5=f6=f7=f8=f9=fa=fb=fc=fd=fe=ff uid 0 ]
 fA=20fifo [gid 74 kind fifo perm 12345 uid 52 ]
 fA=20socket [gid 719648 kind sock perm 71964873 uid 7194783 ]
 fA=20block=20file [gid 9174863 kind blk perm 9717483 rdev 82749 uid 174872 ]
