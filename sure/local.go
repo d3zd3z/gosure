@@ -83,6 +83,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		atts = regAtts
 	case syscall.S_IFLNK:
 		lnkAtts := &LinkAtts{}
+		basePerms(&lnkAtts.Base, sys)
 		target, err := os.Readlink(name)
 		if err != nil {
 			log.Printf("Error reading symlink: %v", err)

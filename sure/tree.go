@@ -51,7 +51,7 @@ type RegAtts struct {
 func (r *RegAtts) GetKind() string { return "file" }
 
 type LinkAtts struct {
-	// TODO: Should store base atts.
+	Base BaseAtts
 	Targ string
 }
 
