@@ -2,6 +2,7 @@ package store // import "davidb.org/x/gosure/store"
 
 import (
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,6 +29,13 @@ func (s *Store) Write(tree *sure.Tree) error {
 	s.FixTags()
 
 	// TODO: Check for an existing file and make a delta.
+	base, err := s.GetDelta(DeltaLatest)
+	if err == nil {
+		return s.WriteDelta(tree, base)
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
 
 	wr, err := weave.NewNewWeave(s, s.Name, s.Tags)
 	if err != nil {
@@ -45,14 +53,88 @@ func (s *Store) Write(tree *sure.Tree) error {
 	return wr.Close()
 }
 
+// Knowing the previous version, write a new delta to the surefile.
+func (s *Store) WriteDelta(tree *sure.Tree, base int) error {
+	wr, err := weave.NewDeltaWriter(s, base, s.Name, s.Tags)
+	if err != nil {
+		return err
+	}
+	// Don't explicitly close to avoid corrupt file.
+
+	err = tree.Encode(wr)
+	if err != nil {
+		return err
+	}
+
+	return wr.Close()
+}
+
+// Magic delta numbers to refer to previous deltas
+// TODO: Interpret these the same as slices in python to be more
+// flexible.
+const (
+	DeltaLatest = -1 // The most recent version.
+	DeltaPrior  = -2 // The second to most recent version.
+)
+
 // Read a tree from the data file.
 func (s *Store) ReadDat() (*sure.Tree, error) {
-	return s.readNamed(s.datName())
+	return s.ReadDelta(DeltaLatest)
 }
 
 // Read a tree from the backup file.
 func (s *Store) ReadBak() (*sure.Tree, error) {
-	return s.readNamed(s.bakName())
+	return s.ReadDelta(DeltaPrior)
+}
+
+// Read a given delta number.  The delta can be a number retrieved
+// from the header, or it can be one of the above DeltaLatest, or
+// DeltaPrior constants to read specific recent or nearly recent
+// versions.
+func (s *Store) ReadDelta(num int) (*sure.Tree, error) {
+	num, err := s.GetDelta(num)
+	if err != nil {
+		return nil, err
+	}
+
+	pd := sure.NewPushDecoder()
+
+	err = weave.ReadDelta(s, num, func(text string) error {
+		return pd.Add(text)
+	})
+	if err == io.EOF {
+		err = nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return pd.Tree()
+}
+
+// GetDelta canonicalizes a delta number.  Returns an error if there
+// was no delta to read.
+func (s *Store) GetDelta(num int) (int, error) {
+	hdr, err := weave.ReadHeader(s)
+	if err != nil {
+		return 0, err
+	}
+
+	// Adjust the delta number to handle ones near the end.
+	switch num {
+	case DeltaLatest:
+		num = hdr.LatestDelta()
+		if num == 0 {
+			return 0, errors.New("No versions in surefile")
+		}
+	case DeltaPrior:
+		num, err = hdr.PenultimateDelta()
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return num, nil
 }
 
 // Read a tree from the given pathname.

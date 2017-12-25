@@ -2,8 +2,10 @@ package weave
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"time"
 )
 
@@ -56,6 +58,36 @@ func (h *Header) Save(w io.Writer) error {
 	// The json encoder adds a newline.
 	enc := json.NewEncoder(w)
 	return enc.Encode(h)
+}
+
+// Return the most recent delta in the store.  Zero means there are no
+// deltas (this is valid for a new blank header).
+func (h *Header) LatestDelta() int {
+	max := 0
+	for _, d := range h.Deltas {
+		if d.Number > max {
+			max = d.Number
+		}
+	}
+	return max
+}
+
+// Return the penultimate delta, if there is one.  Will return an
+// error if this it not the case.
+func (h *Header) PenultimateDelta() (int, error) {
+	var deltas []int
+
+	for _, d := range h.Deltas {
+		deltas = append(deltas, d.Number)
+	}
+
+	if len(deltas) < 2 {
+		return 0, errors.New("Cannot load previous version, there is only one")
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(deltas)))
+
+	return deltas[1], nil
 }
 
 var InvalidHeader = fmt.Errorf("Invalid weave header")

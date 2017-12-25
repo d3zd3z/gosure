@@ -25,6 +25,11 @@ func Decode(r io.Reader) (*Tree, error) {
 			return nil, err
 		}
 
+		// Trim the newline.
+		if len(line) > 0 && line[len(line)-1] == '\n' {
+			line = line[:len(line)-1]
+		}
+
 		err = pd.add(line)
 		if err != nil {
 			return nil, err
@@ -56,8 +61,23 @@ func NewPushDecoder() *PushDecoder {
 	return &pd
 }
 
+// Add adds a line to the push decoder.
+func (pd *PushDecoder) Add(line string) error {
+	return pd.add(line)
+}
+
+// Tree extracts the tree from the push decoder.  Returns an error if
+// a full surefile wasn't pushed to it.
+func (pd *PushDecoder) Tree() (*Tree, error) {
+	if pd.result == nil || len(pd.tree) != 0 {
+		return nil, fmt.Errorf("Invalid ending state")
+	}
+
+	return pd.result, nil
+}
+
 func (pd *PushDecoder) needAsure(line string) error {
-	if line != "asure-2.0\n" {
+	if line != "asure-2.0" {
 		return errors.New("Invalid Magic")
 	}
 	pd.add = pd.needHyphens
@@ -65,7 +85,7 @@ func (pd *PushDecoder) needAsure(line string) error {
 }
 
 func (pd *PushDecoder) needHyphens(line string) error {
-	if line != "-----\n" {
+	if line != "-----" {
 		return errors.New("Invalid Magic")
 	}
 	pd.add = pd.addDirs
