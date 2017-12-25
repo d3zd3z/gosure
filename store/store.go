@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"davidb.org/x/gosure/sure"
+	"davidb.org/x/gosure/weave"
 )
 
 // The Store represents the current surefile store.  The default
@@ -24,7 +25,7 @@ type Store struct {
 // Write the tree to the surefile, archiving a previous version.
 func (s *Store) Write(tree *sure.Tree) error {
 	if len(s.Tags) > 0 {
-		panic("TODO")
+		return s.WriteWeave(tree)
 	}
 
 	tname, err := s.writeTemp(tree)
@@ -45,6 +46,26 @@ func (s *Store) Write(tree *sure.Tree) error {
 	}
 
 	return nil
+}
+
+// WriteWeave writes a new weave file to the given store.  This will
+// wipe out any existing weave.
+func (s *Store) WriteWeave(tree *sure.Tree) error {
+	// TODO: Figure out 'name' part better.
+	wr, err := weave.NewNewWeave(s, "name", s.Tags)
+	if err != nil {
+		return err
+	}
+	// Note that we explicitly don't close this if there is a
+	// problem.  It is better to leave files around than write a
+	// blank one.  TODO: Figure out how to handle this better.
+
+	err = tree.Encode(wr)
+	if err != nil {
+		return err
+	}
+
+	return wr.Close()
 }
 
 // Read a tree from the data file.
@@ -112,7 +133,7 @@ func (s *Store) writeTemp(tree *sure.Tree) (string, error) {
 func (s *Store) tmpFile() (*os.File, error) {
 	n := 0
 	for {
-		name := s.makeName(strconv.Itoa(n))
+		name := s.makeName(strconv.Itoa(n), !s.Plain)
 
 		f, err := os.OpenFile(name, os.O_WRONLY|os.O_EXCL|os.O_CREATE, 0644)
 		if err == nil {
@@ -128,14 +149,14 @@ func (s *Store) tmpFile() (*os.File, error) {
 
 // makeName generates a filename with the given string as the
 // extension part of the name
-func (s *Store) makeName(ext string) string {
+func (s *Store) makeName(ext string, compressed bool) string {
 	base := s.Base
 	if base == "" {
 		base = "2sure"
 	}
 
 	gz := ".gz"
-	if s.Plain {
+	if !compressed {
 		gz = ""
 	}
 
@@ -144,10 +165,27 @@ func (s *Store) makeName(ext string) string {
 
 // datName returns the pathname for the primary dat file.
 func (s *Store) datName() string {
-	return s.makeName("dat")
+	return s.makeName("dat", !s.Plain)
 }
 
 // bakName returns the pathname for the backup file.
 func (s *Store) bakName() string {
-	return s.makeName("bak")
+	return s.makeName("bak", !s.Plain)
+}
+
+// NamingConvention implementation.
+func (s *Store) TempFile(num int, compressed bool) string {
+	return s.makeName(strconv.Itoa(num), compressed)
+}
+
+func (s *Store) MainFile() string {
+	return s.datName()
+}
+
+func (s *Store) BackupFile() string {
+	return s.bakName()
+}
+
+func (s *Store) IsCompressed() bool {
+	return !s.Plain
 }
