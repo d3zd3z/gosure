@@ -30,8 +30,8 @@ func randomName(rand *rand.Rand) string {
 	for i := 0; i < limit; i++ {
 		// Most of the time, generate an ascii character
 		// (possibly control).
-		if rand.Intn(10) > 0 {
-			buf.WriteRune(rand.Int31n(128))
+		if rand.Intn(1000) > 0 {
+			buf.WriteRune(rand.Int31n(96) + 32)
 		} else {
 			buf.WriteRune(rand.Int31n(0xd8000))
 		}
