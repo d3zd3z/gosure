@@ -247,7 +247,7 @@ func (p *Parser) updateKeep() {
 }
 
 // Represents a woven file.
-type File struct {
+type file struct {
 	Name string
 }
 
@@ -256,7 +256,7 @@ var deltaRe *regexp.Regexp = regexp.MustCompile("^\x01d D ([\\d\\.]+) .* (\\d+) 
 // ScanRevs retrieves retrieves the mapping from a delta number to an
 // SCCS revision.  For files written by SCCS, this can be used to
 // retrieve specific deltas using SCCS.
-func (s *File) ScanRevs() (map[int]string, error) {
+func (s *file) ScanRevs() (map[int]string, error) {
 	fd, err := os.Open(s.Name)
 	if err != nil {
 		return nil, err
