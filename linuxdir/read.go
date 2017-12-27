@@ -33,7 +33,7 @@ func Readdir(name string) (entries []os.FileInfo, err error) {
 			names = append(names, entry)
 		}
 	}
-	sort.Sort((*inodeSort)(&names))
+	sort.Sort(inodeSort(names))
 
 	entries = make([]os.FileInfo, 0, len(names))
 	for i := range names {
@@ -46,7 +46,7 @@ func Readdir(name string) (entries []os.FileInfo, err error) {
 			entries = append(entries, tmp)
 		}
 	}
-	sort.Sort((*nameSort)(&entries))
+	sort.Sort(nameSort(entries))
 	return
 }
 
