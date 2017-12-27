@@ -14,13 +14,13 @@ func doUpdate(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	newTree, err := sure.ScanFs(".")
+	newTree, err := sure.ScanFs(scanDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	sure.MigrateHashes(oldTree, newTree)
-	hashUpdate(newTree)
+	hashUpdate(newTree, scanDir)
 	err = storeArg.Write(newTree)
 	if err != nil {
 		log.Fatal(err)

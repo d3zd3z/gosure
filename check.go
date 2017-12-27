@@ -13,7 +13,7 @@ func doCheck(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	newTree, err := sure.ScanFs(".")
+	newTree, err := sure.ScanFs(scanDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func doCheck(cmd *cobra.Command, args []string) {
 	est := newTree.EstimateHashes()
 	prog := sure.NewProgress(est.Files, est.Bytes)
 	prog.Flush()
-	newTree.ComputeHashes(&prog)
+	newTree.ComputeHashes(&prog, scanDir)
 	prog.Flush()
 
 	sure.CompareTrees(oldTree, newTree)

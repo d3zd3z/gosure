@@ -48,6 +48,9 @@ func main() {
 		Run:   doUpdate,
 	}
 
+	pf = update.PersistentFlags()
+	pf.StringVarP(&scanDir, "dir", "d", ".", "Directory to scan")
+
 	root.AddCommand(update)
 
 	signoff := &cobra.Command{
@@ -63,6 +66,9 @@ func main() {
 		Short: "Compare current scan with tree",
 		Run:   doCheck,
 	}
+
+	pf = check.PersistentFlags()
+	pf.StringVarP(&scanDir, "dir", "d", ".", "Directory to scan")
 
 	root.AddCommand(check)
 

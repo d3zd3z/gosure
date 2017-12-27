@@ -20,22 +20,15 @@ func TestUnreadableFile(t *testing.T) {
 	}
 	defer os.RemoveAll(tdir)
 
-	// TODO: Once #4 is fixed, we should be able to scan the dir
-	// without having to enter it.
-	err = os.Chdir(tdir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// Create a single file, and make it unreadable.
 	makeUnreadableFile(t, tdir)
 
-	tree, err := sure.ScanFs(".")
+	tree, err := sure.ScanFs(tdir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hashUpdate(tree)
+	hashUpdate(tree, tdir)
 
 	var st store.Store
 	err = st.Parse("2sure.dat.gz")

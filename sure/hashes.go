@@ -37,9 +37,8 @@ func (e *Estimate) update(t *Tree) {
 }
 
 // Update all of the file nodes that don't have hashes.
-func (t *Tree) ComputeHashes(prog *Progress) {
-	// TODO: Use proper tree location.
-	t.hashWalk(prog, ".")
+func (t *Tree) ComputeHashes(prog *Progress, dir string) {
+	t.hashWalk(prog, dir)
 }
 
 func (t *Tree) hashWalk(prog *Progress, name string) {
