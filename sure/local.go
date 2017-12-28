@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
+	"sort"
 	"syscall"
-
-	"davidb.org/x/gosure/linuxdir"
 )
 
 // Walk a directory tree, generating a tree structure for it.  All
@@ -34,10 +34,12 @@ func walkFs(name, fullName string, stat os.FileInfo) (tree *Tree, err error) {
 		Atts: getAtts(fullName, stat),
 	}
 
-	entries, err := linuxdir.Readdir(fullName)
+	entries, err := readdir(fullName)
 	if err != nil {
 		return
 	}
+
+	sort.Sort(byName(entries))
 
 	for _, ent := range entries {
 		// log.Printf("Walk: %q", ent.Name())
@@ -60,6 +62,36 @@ func walkFs(name, fullName string, stat os.FileInfo) (tree *Tree, err error) {
 	}
 
 	return
+}
+
+// readdir reads all of the entries in the given directory.  This
+// works like File.Readdir, but skips entries that aren't able to be
+// statted (with a warning) (instead of discarding all of the rest).
+// Unlike File.Readdir, this does not return "." or "..", and the
+// result can be an empty slice.
+func readdir(path string) ([]os.FileInfo, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	names, err := file.Readdirnames(0)
+	if err != nil {
+		return nil, err
+	}
+
+	fi := make([]os.FileInfo, 0, len(names))
+	for _, filename := range names {
+		fip, lerr := os.Lstat(filepath.Join(path, filename))
+		if lerr != nil {
+			// TODO Should warn here.
+			continue
+		}
+		fi = append(fi, fip)
+	}
+
+	return fi, nil
 }
 
 func getAtts(name string, info os.FileInfo) AttMap {
@@ -133,3 +165,10 @@ func basePerms(atts *BaseAtts, sys *syscall.Stat_t) {
 func permission(sys *syscall.Stat_t) uint32 {
 	return uint32(sys.Mode &^ syscall.S_IFMT)
 }
+
+// For sorting by name
+type byName []os.FileInfo
+
+func (p byName) Len() int           { return len(p) }
+func (p byName) Less(i, j int) bool { return p[i].Name() < p[j].Name() }
+func (p byName) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
