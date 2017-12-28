@@ -54,7 +54,8 @@ func (s *Store) Write(tree *sure.Tree) error {
 	return wr.Close()
 }
 
-// Knowing the previous version, write a new delta to the surefile.
+// WriteDelta writes a new delta to the surefile, knowing the previous
+// version.
 func (s *Store) WriteDelta(tree *sure.Tree, base int) error {
 	wr, err := weave.NewDeltaWriter(s, base, s.Name, s.Tags)
 	if err != nil {
@@ -78,20 +79,20 @@ const (
 	DeltaPrior  = -2 // The second to most recent version.
 )
 
-// Read a tree from the data file.
+// ReadDat reads a tree from the data file.
 func (s *Store) ReadDat() (*sure.Tree, error) {
 	return s.ReadDelta(DeltaLatest)
 }
 
-// Read a tree from the backup file.
+// ReadBak reads a tree from the backup file.
 func (s *Store) ReadBak() (*sure.Tree, error) {
 	return s.ReadDelta(DeltaPrior)
 }
 
-// Read a given delta number.  The delta can be a number retrieved
-// from the header, or it can be one of the above DeltaLatest, or
-// DeltaPrior constants to read specific recent or nearly recent
-// versions.
+// ReadDelta reads a given delta number.  The delta can be a number
+// retrieved from the header, or it can be one of the above
+// DeltaLatest, or DeltaPrior constants to read specific recent or
+// nearly recent versions.
 func (s *Store) ReadDelta(num int) (*sure.Tree, error) {
 	num, err := s.GetDelta(num)
 	if err != nil {
@@ -242,19 +243,23 @@ func (s *Store) bakName() string {
 	return s.makeName("bak", !s.Plain)
 }
 
-// NamingConvention implementation.
+// TempFile is used by the naming convention to generate temp files.
+// We just use the number as the extension.
 func (s *Store) TempFile(num int, compressed bool) string {
 	return s.makeName(strconv.Itoa(num), compressed)
 }
 
+// MainFile return the main file name.
 func (s *Store) MainFile() string {
 	return s.datName()
 }
 
+// BackupFile returns the name of the backup file.
 func (s *Store) BackupFile() string {
 	return s.bakName()
 }
 
+// IsCompressed returns whether or not this store is compressed.
 func (s *Store) IsCompressed() bool {
 	return !s.Plain
 }

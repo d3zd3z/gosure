@@ -97,20 +97,24 @@ func (s *Store) String() string {
 	return path.Join(s.Path, base+".dat"+ext)
 }
 
+// Set sets the name of this store.  Used to parse the command line.
 func (s *Store) Set(value string) error {
 	return s.Parse(value)
 }
 
+// Type returns a short description of the type of the store.  Used by
+// the command parsing to print help.
 func (s *Store) Type() string {
 	return "surefile path"
 }
 
-// Wrap the store as a 'Value' to use the tags as a command line
+// Tags wraps the store as a 'Value' to use the tags as a command line
 // argument.
 type Tags struct {
 	store *Store
 }
 
+// NewTags create a new Tags struct, wrapping a given store.
 func NewTags(store *Store) Tags {
 	return Tags{
 		store: store,
@@ -132,6 +136,8 @@ func (t Tags) String() string {
 	return buf.String()
 }
 
+// Set adds a new tag, from the command line parsing.  Must be of the
+// form key=value.
 func (t Tags) Set(value string) error {
 	f := strings.SplitN(value, "=", 2)
 	if len(f) != 2 {
@@ -146,6 +152,7 @@ func (t Tags) Set(value string) error {
 	return nil
 }
 
+// Type returns a descriptive name for this type, for help messages.
 func (t Tags) Type() string {
 	return "tags"
 }

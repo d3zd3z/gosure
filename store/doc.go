@@ -1,5 +1,4 @@
-// The store package manages the files that are used to hold sure
-// data.
+// Package store manages the files that are used to hold sure data.
 //
 // Sure data is stored in a small number of files, referred to as sure
 // files.  The features used will determine which of these files is
