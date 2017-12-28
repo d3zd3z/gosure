@@ -39,6 +39,8 @@ type SimpleNaming struct {
 	Compressed bool   // Are these names to indicate compression.
 }
 
+// MakeName constructs a name with a given extention and possibility
+// of being compressed.
 func (sn *SimpleNaming) MakeName(ext string, compressed bool) string {
 	gz := ""
 	if sn.Compressed && compressed {
@@ -47,19 +49,23 @@ func (sn *SimpleNaming) MakeName(ext string, compressed bool) string {
 	return fmt.Sprintf("%s/%s.%s%s", sn.Path, sn.Base, ext, gz)
 }
 
+// MainFile returns the name of the primary file for this naming.
 func (sn *SimpleNaming) MainFile() string {
 	return sn.MakeName(sn.Ext, true)
 }
 
+// BackupFile returns the name of the backup file for this naming.
 func (sn *SimpleNaming) BackupFile() string {
 	return sn.MakeName("bak", true)
 }
 
+// TempFile returns the name of a temp file, containing a given
+// sequence number, and with the desired compression.
 func (sn *SimpleNaming) TempFile(num int, compressed bool) string {
 	return sn.MakeName(strconv.Itoa(num), compressed)
 }
 
-// MakeTemp will create a tempfile, the file, and an error.
+// TempFile will create a tempfile, the file, and an error.
 func TempFile(nc NamingConvention, compressed bool) (file *os.File, err error) {
 	n := 0
 	for {
@@ -76,10 +82,12 @@ func TempFile(nc NamingConvention, compressed bool) (file *os.File, err error) {
 			return nil, err
 		}
 
-		n += 1
+		n++
 	}
 }
 
+// IsCompressed returns whether this naming convention expects
+// datafiles to be compressed.
 func (sn *SimpleNaming) IsCompressed() bool {
 	return sn.Compressed
 }

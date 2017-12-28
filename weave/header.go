@@ -34,8 +34,9 @@ func NewHeader() Header {
 	}
 }
 
-// Add a new delta to this header, of a given name and tags.  The tags
-// will be copied, the Time filled in, and the number returned.
+// AddDelta adds a new delta to this header, of a given name and tags.
+// The tags will be copied, the Time filled in, and the number
+// returned.
 func (h *Header) AddDelta(name string, tags map[string]string) int {
 	newTags := make(map[string]string)
 
@@ -67,8 +68,8 @@ func (h *Header) Save(w io.Writer) error {
 	return enc.Encode(h)
 }
 
-// Return the most recent delta in the store.  Zero means there are no
-// deltas (this is valid for a new blank header).
+// LatestDelta returns the most recent delta in the store.  Zero means
+// there are no deltas (this is valid for a new blank header).
 func (h *Header) LatestDelta() int {
 	max := 0
 	for _, d := range h.Deltas {
@@ -79,8 +80,8 @@ func (h *Header) LatestDelta() int {
 	return max
 }
 
-// Return the penultimate delta, if there is one.  Will return an
-// error if this it not the case.
+// PenultimateDelta returns the penultimate delta, if there is one.
+// Will return an error if this it not the case.
 func (h *Header) PenultimateDelta() (int, error) {
 	var deltas []int
 
@@ -97,14 +98,16 @@ func (h *Header) PenultimateDelta() (int, error) {
 	return deltas[1], nil
 }
 
-var InvalidHeader = fmt.Errorf("Invalid weave header")
+// ErrInvalidHeader indicates that the header in the weave file was
+// malformed.  This usually means this isn't actually a weave file.
+var ErrInvalidHeader = fmt.Errorf("invalid weave header")
 
 // A BytesReader is something that can be read a line at a time.
 type BytesReader interface {
 	ReadBytes(delim byte) ([]byte, error)
 }
 
-// Load reads the header from the stream.
+// LoadHeader reads the header from the stream.
 func LoadHeader(r BytesReader) (*Header, error) {
 	line, err := r.ReadBytes('\n')
 	if err != nil {
@@ -112,7 +115,7 @@ func LoadHeader(r BytesReader) (*Header, error) {
 	}
 
 	if len(line) < 2 || line[0] != 1 || line[1] != 't' {
-		return nil, InvalidHeader
+		return nil, ErrInvalidHeader
 	}
 
 	var header Header

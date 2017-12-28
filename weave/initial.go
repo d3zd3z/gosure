@@ -55,7 +55,7 @@ func weaveCreate(nc NamingConvention, head *Header) (*os.File, io.WriteCloser, e
 	return file, wr, err
 }
 
-// NewWeave creates a new weave file.  The file will be named based on
+// NewNewWeave creates a new weave file.  The file will be named based on
 // the given naming convention.  The 'name' will be used for the
 // initial delta, and the tags will be recorded in that delta.  Close
 // must be called to finialize the weaving.  Note that the underlying
@@ -90,6 +90,8 @@ func (w *NewWeaveWriter) Write(p []byte) (n int, err error) {
 	return w.w.Write(p)
 }
 
+// Close closes the NewWeaveWriter, renaming the new file to the
+// finalized name.
 func (w *NewWeaveWriter) Close() error {
 	_, err := fmt.Fprintf(w, "\x01E %d\n", w.delta)
 	if err != nil {

@@ -51,7 +51,7 @@ func ReadDelta(nc NamingConvention, delta int, line func(text string) error) err
 	return ReadGeneral(nc, delta, deltaSink(line))
 }
 
-// GeneralReader reads a delta using the specified Sink.
+// ReadGeneral reads a delta using the specified Sink.
 func ReadGeneral(nc NamingConvention, delta int, sink Sink) error {
 	file, rd, err := weaveOpen(nc)
 	if err != nil {

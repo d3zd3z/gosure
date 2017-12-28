@@ -1,3 +1,6 @@
+// Package weave reads and writes multiple revisions of line-oriented
+// data to a weave file.
+//
 // A weave is a type of delta encoding that stores all of the
 // revisions of the file linearily.
 //
@@ -56,8 +59,8 @@ type Parser struct {
 	pending   string // The pending line.
 }
 
-// Construct a new reader that reads from the given Reader, targeting
-// the given delta.  Will call into sink for each record.
+// NewParser constructs a new reader that reads from the given Reader,
+// targeting the given delta.  Will call into sink for each record.
 func NewParser(rd io.Reader, sink Sink, delta int) *Parser {
 	return &Parser{
 		Source: bufio.NewReader(rd),
@@ -68,10 +71,10 @@ func NewParser(rd io.Reader, sink Sink, delta int) *Parser {
 	}
 }
 
-// Run the parser until we reach line 'lineno'.  Lines are numbered
-// from 1, so calling with a lineno of zero will run the parser until
-// the end of the input.  Returns an error if there is one, can also
-// return io.EOF to indicate the end of parsing.
+// ParseTo runs the parser until we reach line 'lineno'.  Lines are
+// numbered from 1, so calling with a lineno of zero will run the
+// parser until the end of the input.  Returns an error if there is
+// one, can also return io.EOF to indicate the end of parsing.
 func (p *Parser) ParseTo(lineno int) error {
 	if p.isPending {
 		if err := p.Sink.Plain(p.pending, p.keeping); err != nil {
@@ -251,7 +254,7 @@ type file struct {
 	Name string
 }
 
-var deltaRe *regexp.Regexp = regexp.MustCompile("^\x01d D ([\\d\\.]+) .* (\\d+) \\d+$")
+var deltaRe = regexp.MustCompile("^\x01d D ([\\d\\.]+) .* (\\d+) \\d+$")
 
 // ScanRevs retrieves retrieves the mapping from a delta number to an
 // SCCS revision.  For files written by SCCS, this can be used to
