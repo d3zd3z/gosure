@@ -9,18 +9,25 @@ import (
 	"time"
 )
 
+// A Header is at the beginning of ever weave file.  It describes each
+// of the deltas in the file.  The version describes the version of
+// the header, in this case, 1.
 type Header struct {
 	Version int      `json:"version"`
 	Deltas  []*Delta `json:"deltas"`
 }
 
+// A Delta describes a single version of the data stored in the weave
+// file.  They are numbered, ideally sequentially, starting with 1,
+// have a name, a timestamp, and a set of tags.
 type Delta struct {
 	Name   string            `json:"name"`
 	Number int               `json:"number"`
 	Tags   map[string]string `json:"tags"`
-	Time   string            `json:"time"`
+	Time   time.Time         `json:"time"`
 }
 
+// NewHeader creates a blank header describing zero deltas.
 func NewHeader() Header {
 	return Header{
 		Version: 1,
@@ -40,7 +47,7 @@ func (h *Header) AddDelta(name string, tags map[string]string) int {
 		Name:   name,
 		Number: len(h.Deltas) + 1,
 		Tags:   newTags,
-		Time:   time.Now().UTC().Format(time.RFC3339Nano),
+		Time:   time.Now().UTC().Round(0),
 	}
 	h.Deltas = append(h.Deltas, &delta)
 

@@ -200,8 +200,6 @@ func parseNameAtts(line string, name *string, atts *AttMap) error {
 
 		allAtts[key] = value
 	}
-
-	return nil
 }
 
 func scanName(line string, pos *int) (string, error) {

@@ -51,6 +51,9 @@ func (w *DeltaWriter) Write(p []byte) (n int, err error) {
 	return w.wr.Write(p)
 }
 
+// Close closes the delta writer.  This causes the delta to actually
+// be generated, so it is important to check the error status from
+// this method.
 func (w *DeltaWriter) Close() error {
 	err := w.wr.Flush()
 	if err != nil {
