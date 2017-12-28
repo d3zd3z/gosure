@@ -46,17 +46,18 @@ func (s *Store) Parse(name string) error {
 
 	// Strip off the known suffixes.
 	ext := path.Ext(base)
-	if ext == ".weave" {
+	switch ext {
+	case ".weave":
 		base = base[:len(base)-6]
 		s.Ext = "weave"
-	} else if ext == ".dat" || ext == ".bak" {
+	case ".dat", ".bak":
 		base = base[:len(base)-4]
-	} else if ext != "" {
-		return InvalidName(name)
-	} else {
+	case "":
 		// If no extension was given, use compression by
 		// default.
 		plain = false
+	default:
+		return InvalidName(name)
 	}
 
 	s.Path = dir
