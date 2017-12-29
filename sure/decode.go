@@ -334,30 +334,26 @@ func decWalk(v reflect.Value, atts map[string]string) error {
 }
 
 // A mapping between kind names and the integer codes for them.
-var allKinds = make(map[string]uint32)
-
-func init() {
-	allKinds["dir"] = S_IFDIR
-	allKinds["file"] = S_IFREG
-	allKinds["lnk"] = S_IFLNK
-	allKinds["fifo"] = S_IFIFO
-	allKinds["sock"] = S_IFSOCK
-	allKinds["chr"] = S_IFCHR
-	allKinds["blk"] = S_IFBLK
+var allKinds = map[string]uint32{
+	"dir":  S_IFDIR,
+	"file": S_IFREG,
+	"lnk":  S_IFLNK,
+	"fifo": S_IFIFO,
+	"sock": S_IFSOCK,
+	"chr":  S_IFCHR,
+	"blk":  S_IFBLK,
 }
 
 // A mapping between the kind names and the structure type used to
 // build it.
-var kindToType = make(map[string]reflect.Type)
-
-func init() {
-	kindToType["dir"] = reflect.TypeOf((*DirAtts)(nil)).Elem()
-	kindToType["file"] = reflect.TypeOf((*RegAtts)(nil)).Elem()
-	kindToType["lnk"] = reflect.TypeOf((*LinkAtts)(nil)).Elem()
-	kindToType["fifo"] = reflect.TypeOf((*FifoAtts)(nil)).Elem()
-	kindToType["sock"] = reflect.TypeOf((*FifoAtts)(nil)).Elem()
-	kindToType["chr"] = reflect.TypeOf((*DevAtts)(nil)).Elem()
-	kindToType["blk"] = reflect.TypeOf((*DevAtts)(nil)).Elem()
+var kindToType = map[string]reflect.Type{
+	"dir":  reflect.TypeOf((*DirAtts)(nil)).Elem(),
+	"file": reflect.TypeOf((*RegAtts)(nil)).Elem(),
+	"lnk":  reflect.TypeOf((*LinkAtts)(nil)).Elem(),
+	"fifo": reflect.TypeOf((*FifoAtts)(nil)).Elem(),
+	"sock": reflect.TypeOf((*FifoAtts)(nil)).Elem(),
+	"chr":  reflect.TypeOf((*DevAtts)(nil)).Elem(),
+	"blk":  reflect.TypeOf((*DevAtts)(nil)).Elem(),
 }
 
 func mustRead(buf *bufio.Reader, expect byte) (err error) {
