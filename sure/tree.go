@@ -34,13 +34,13 @@ type BaseAtts struct {
 }
 
 type DirAtts struct {
-	Base BaseAtts
+	BaseAtts
 }
 
 func (r *DirAtts) GetKind() string { return "dir" }
 
 type RegAtts struct {
-	Base  BaseAtts
+	BaseAtts
 	Mtime int64 // TODO: Store better than seconds.
 	Ctime int64 // TODO: Store better than seconds.
 	Ino   uint64
@@ -51,7 +51,7 @@ type RegAtts struct {
 func (r *RegAtts) GetKind() string { return "file" }
 
 type LinkAtts struct {
-	Base BaseAtts
+	BaseAtts
 	Targ string
 }
 
@@ -60,7 +60,7 @@ func (r *LinkAtts) GetKind() string { return "lnk" }
 // FifoAtts is for both fifos and sockets.
 type FifoAtts struct {
 	Kind uint32
-	Base BaseAtts
+	BaseAtts
 }
 
 func (a *FifoAtts) GetKind() string {
@@ -74,7 +74,7 @@ func (a *FifoAtts) GetKind() string {
 // DevAtts is for block and character nodes.
 type DevAtts struct {
 	Kind uint32
-	Base BaseAtts
+	BaseAtts
 	Rdev uint64
 }
 

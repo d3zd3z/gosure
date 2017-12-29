@@ -44,7 +44,7 @@ func TestEncode(t *testing.T) {
 var tdata1 *sure.Tree = &sure.Tree{
 	Name: "__root__",
 	Atts: &sure.DirAtts{
-		Base: sure.BaseAtts{
+		BaseAtts: sure.BaseAtts{
 			Uid:  12345,
 			Gid:  54321,
 			Perm: 0755,
@@ -55,7 +55,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 		&sure.File{
 			Name: "regular file",
 			Atts: &sure.RegAtts{
-				Base: sure.BaseAtts{
+				BaseAtts: sure.BaseAtts{
 					Uid:  0xffffffff,
 					Gid:  0x80000000,
 					Perm: 0644,
@@ -82,7 +82,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 			Name: "A fifo",
 			Atts: &sure.FifoAtts{
 				Kind: sure.S_IFIFO,
-				Base: sure.BaseAtts{
+				BaseAtts: sure.BaseAtts{
 					Uid:  52,
 					Gid:  74,
 					Perm: 12345,
@@ -93,7 +93,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 			Name: "A socket",
 			Atts: &sure.FifoAtts{
 				Kind: sure.S_IFSOCK,
-				Base: sure.BaseAtts{
+				BaseAtts: sure.BaseAtts{
 					Uid:  7194783,
 					Gid:  719648,
 					Perm: 71964873,
@@ -104,7 +104,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 			Name: "A block file",
 			Atts: &sure.DevAtts{
 				Kind: sure.S_IFBLK,
-				Base: sure.BaseAtts{
+				BaseAtts: sure.BaseAtts{
 					Uid:  174872,
 					Gid:  9174863,
 					Perm: 9717483,
@@ -116,7 +116,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 			Name: "A character file",
 			Atts: &sure.DevAtts{
 				Kind: sure.S_IFCHR,
-				Base: sure.BaseAtts{
+				BaseAtts: sure.BaseAtts{
 					Uid:  9817497,
 					Gid:  7196487,
 					Perm: 971964,

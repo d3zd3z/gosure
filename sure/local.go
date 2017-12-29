@@ -101,7 +101,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 	switch sys.Mode & syscall.S_IFMT {
 	case syscall.S_IFDIR:
 		dirAtts := &DirAtts{}
-		basePerms(&dirAtts.Base, sys)
+		basePerms(&dirAtts.BaseAtts, sys)
 		atts = dirAtts
 	case syscall.S_IFREG:
 		mtime, ctime := getSysTimes(sys)
@@ -111,11 +111,11 @@ func getAtts(name string, info os.FileInfo) AttMap {
 			Ino:   sys.Ino,
 			Size:  sys.Size,
 		}
-		basePerms(&regAtts.Base, sys)
+		basePerms(&regAtts.BaseAtts, sys)
 		atts = regAtts
 	case syscall.S_IFLNK:
 		lnkAtts := &LinkAtts{}
-		basePerms(&lnkAtts.Base, sys)
+		basePerms(&lnkAtts.BaseAtts, sys)
 		target, err := os.Readlink(name)
 		if err != nil {
 			log.Printf("Error reading symlink: %v", err)
@@ -125,18 +125,18 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		atts = lnkAtts
 	case syscall.S_IFIFO:
 		fifoAtts := &FifoAtts{Kind: S_IFIFO}
-		basePerms(&fifoAtts.Base, sys)
+		basePerms(&fifoAtts.BaseAtts, sys)
 		atts = fifoAtts
 	case syscall.S_IFSOCK:
 		fifoAtts := &FifoAtts{Kind: S_IFSOCK}
-		basePerms(&fifoAtts.Base, sys)
+		basePerms(&fifoAtts.BaseAtts, sys)
 		atts = fifoAtts
 	case syscall.S_IFCHR:
 		devAtts := &DevAtts{
 			Kind: S_IFCHR,
 			Rdev: uint64(sys.Rdev),
 		}
-		basePerms(&devAtts.Base, sys)
+		basePerms(&devAtts.BaseAtts, sys)
 		atts = devAtts
 		// TODO: These should have time info on them?
 	case syscall.S_IFBLK:
@@ -144,7 +144,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 			Kind: S_IFBLK,
 			Rdev: uint64(sys.Rdev),
 		}
-		basePerms(&devAtts.Base, sys)
+		basePerms(&devAtts.BaseAtts, sys)
 		atts = devAtts
 	default:
 		log.Printf("Node: %+v", info)

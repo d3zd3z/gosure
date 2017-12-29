@@ -9,9 +9,9 @@ import (
 // valid random values.
 func generateRegAtts(rand *rand.Rand) AttMap {
 	var a RegAtts
-	a.Base.Uid = rand.Uint32()
-	a.Base.Gid = rand.Uint32()
-	a.Base.Perm = uint32(rand.Int31n(010000))
+	a.Uid = rand.Uint32()
+	a.Gid = rand.Uint32()
+	a.Perm = uint32(rand.Int31n(010000))
 	a.Mtime = rand.Int63n(1e10)
 	a.Ctime = rand.Int63n(1e10)
 	a.Ino = uint64(rand.Int63())
@@ -53,9 +53,9 @@ func generateFifoAtts(rand *rand.Rand) AttMap {
 	if rand.Intn(2) == 0 {
 		a.Kind = S_IFSOCK
 	}
-	a.Base.Uid = rand.Uint32()
-	a.Base.Gid = rand.Uint32()
-	a.Base.Perm = uint32(rand.Int31n(010000))
+	a.Uid = rand.Uint32()
+	a.Gid = rand.Uint32()
+	a.Perm = uint32(rand.Int31n(010000))
 
 	return &a
 }
@@ -66,9 +66,9 @@ func generateDevAtts(rand *rand.Rand) AttMap {
 	if rand.Intn(2) == 0 {
 		a.Kind = S_IFCHR
 	}
-	a.Base.Uid = rand.Uint32()
-	a.Base.Gid = rand.Uint32()
-	a.Base.Perm = uint32(rand.Int31n(010000))
+	a.Uid = rand.Uint32()
+	a.Gid = rand.Uint32()
+	a.Perm = uint32(rand.Int31n(010000))
 	a.Rdev = uint64(rand.Int63())
 
 	return &a
@@ -76,9 +76,9 @@ func generateDevAtts(rand *rand.Rand) AttMap {
 
 func generateDirAtts(rand *rand.Rand) AttMap {
 	var a DirAtts
-	a.Base.Uid = rand.Uint32()
-	a.Base.Gid = rand.Uint32()
-	a.Base.Perm = uint32(rand.Int31n(010000))
+	a.Uid = rand.Uint32()
+	a.Gid = rand.Uint32()
+	a.Perm = uint32(rand.Int31n(010000))
 
 	return &a
 }
