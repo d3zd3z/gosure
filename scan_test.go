@@ -31,7 +31,7 @@ func TestUnreadableFile(t *testing.T) {
 	hashUpdate(tree, tdir)
 
 	var st store.Store
-	err = st.Parse("2sure.dat.gz")
+	err = st.Parse(filepath.Join(tdir, "2sure.dat.gz"))
 	if err != nil {
 		t.Fatal(err)
 	}
