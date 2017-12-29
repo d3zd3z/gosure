@@ -2,12 +2,17 @@ package main
 
 import (
 	"log"
+	"time"
 
+	"davidb.org/x/gosure/status"
 	"davidb.org/x/gosure/sure"
 	"github.com/spf13/cobra"
 )
 
 func doCheck(cmd *cobra.Command, args []string) {
+	st := status.NewManager()
+	defer st.Close()
+
 	oldTree, err := storeArg.ReadDat()
 	if err != nil {
 		log.Fatal(err)
@@ -20,10 +25,11 @@ func doCheck(cmd *cobra.Command, args []string) {
 
 	// TODO: Factor this out between scan.
 	est := newTree.EstimateHashes()
-	prog := sure.NewProgress(est.Files, est.Bytes)
+	meter := st.Meter(250 * time.Millisecond)
+	prog := sure.NewProgress(est.Files, est.Bytes, meter)
 	prog.Flush()
 	newTree.ComputeHashes(&prog, scanDir)
-	prog.Flush()
+	meter.Close()
 
 	sure.CompareTrees(oldTree, newTree)
 }

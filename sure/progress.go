@@ -2,16 +2,14 @@ package sure
 
 import (
 	"fmt"
-	"log"
-	"time"
+	"io"
 )
 
 // A progress meter.  Records files visited, and number of bytes
 // processed.  When given an estimate, prints a simple periodic report
 // of how far along we think we are.
 type Progress struct {
-	next time.Time
-
+	wr         io.Writer
 	curFiles   uint64
 	totalFiles uint64
 
@@ -19,11 +17,11 @@ type Progress struct {
 	totalBytes uint64
 }
 
-func NewProgress(files, bytes uint64) Progress {
+func NewProgress(files, bytes uint64, wr io.Writer) Progress {
 	return Progress{
 		totalFiles: files,
 		totalBytes: bytes,
-		next:       time.Now().Add(5 * time.Second),
+		wr:         wr,
 	}
 }
 
@@ -32,21 +30,16 @@ func NewProgress(files, bytes uint64) Progress {
 func (p *Progress) Update(files, bytes uint64) {
 	p.curFiles += files
 	p.curBytes += bytes
-
-	if time.Now().After(p.next) {
-		p.Flush()
-	}
+	p.Flush()
 }
 
 // Flush the output, regardless of any update needed.
 func (p *Progress) Flush() {
-	log.Printf("%7d/%7d (%5.1f%%) files, %s/%s (%5.1f%%) bytes",
+	fmt.Fprintf(p.wr, "%7d/%7d (%5.1f%%) files, %s/%s (%5.1f%%) bytes\n",
 		p.curFiles, p.totalFiles,
 		float64(p.curFiles)*100.0/float64(p.totalFiles),
 		humanize(p.curBytes), humanize(p.totalBytes),
 		float64(p.curBytes)*100.0/float64(p.totalBytes))
-
-	p.next = time.Now().Add(5 * time.Second)
 }
 
 // Print a size in a more human-friendly format.

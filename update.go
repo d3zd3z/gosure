@@ -3,12 +3,16 @@ package main
 import (
 	"log"
 
+	"davidb.org/x/gosure/status"
 	"davidb.org/x/gosure/sure"
 
 	"github.com/spf13/cobra"
 )
 
 func doUpdate(cmd *cobra.Command, args []string) {
+	st := status.NewManager()
+	defer st.Close()
+
 	oldTree, err := storeArg.ReadDat()
 	if err != nil {
 		log.Fatal(err)
@@ -20,7 +24,7 @@ func doUpdate(cmd *cobra.Command, args []string) {
 	}
 
 	sure.MigrateHashes(oldTree, newTree)
-	hashUpdate(newTree, scanDir)
+	hashUpdate(newTree, scanDir, st)
 	err = storeArg.Write(newTree)
 	if err != nil {
 		log.Fatal(err)
