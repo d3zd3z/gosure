@@ -18,14 +18,16 @@ func doCheck(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	newTree, err := sure.ScanFs(scanDir)
+	meter := st.Meter(250 * time.Millisecond)
+	newTree, err := sure.ScanFs(scanDir, meter)
+	meter.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// TODO: Factor this out between scan.
 	est := newTree.EstimateHashes()
-	meter := st.Meter(250 * time.Millisecond)
+	meter = st.Meter(250 * time.Millisecond)
 	prog := sure.NewProgress(est.Files, est.Bytes, meter)
 	prog.Flush()
 	newTree.ComputeHashes(&prog, scanDir)

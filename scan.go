@@ -14,7 +14,9 @@ func doScan(cmd *cobra.Command, args []string) {
 	st := status.NewManager()
 	defer st.Close()
 
-	tree, err := sure.ScanFs(scanDir)
+	meter := st.Meter(250 * time.Millisecond)
+	tree, err := sure.ScanFs(scanDir, meter)
+	meter.Close()
 	if err != nil {
 		log.Fatal(err)
 	}

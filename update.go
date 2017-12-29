@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"davidb.org/x/gosure/status"
 	"davidb.org/x/gosure/sure"
@@ -18,7 +19,9 @@ func doUpdate(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	newTree, err := sure.ScanFs(scanDir)
+	meter := st.Meter(250 * time.Millisecond)
+	newTree, err := sure.ScanFs(scanDir, meter)
+	meter.Close()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,6 +2,8 @@ package sure
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -10,10 +12,23 @@ import (
 	"syscall"
 )
 
+type scanMeter struct {
+	meter io.Writer
+	dirs  int64
+	files int64
+	bytes int64
+}
+
+func newScanMeter(meter io.Writer) *scanMeter {
+	return &scanMeter{
+		meter: meter,
+	}
+}
+
 // Walk a directory tree, generating a tree structure for it.  All
 // attributes are filled in that can be gleaned through lstat (and
 // possibly readlink).  The files themselves are not opened.
-func ScanFs(path string) (tree *Tree, err error) {
+func ScanFs(path string, meter io.Writer) (tree *Tree, err error) {
 	stat, err := os.Lstat(path)
 	if err != nil {
 		return
@@ -24,11 +39,13 @@ func ScanFs(path string) (tree *Tree, err error) {
 		return
 	}
 
-	return walkFs("__root__", path, stat)
+	sm := newScanMeter(meter)
+
+	return walkFs("__root__", path, stat, sm)
 }
 
 // Walk an already statted (directory) node.
-func walkFs(name, fullName string, stat os.FileInfo) (tree *Tree, err error) {
+func walkFs(name, fullName string, stat os.FileInfo, sm *scanMeter) (tree *Tree, err error) {
 	tree = &Tree{
 		Name: name,
 		Atts: getAtts(fullName, stat),
@@ -46,7 +63,7 @@ func walkFs(name, fullName string, stat os.FileInfo) (tree *Tree, err error) {
 		if ent.IsDir() {
 			var child *Tree
 			child, err = walkFs(ent.Name(),
-				path.Join(fullName, ent.Name()), ent)
+				path.Join(fullName, ent.Name()), ent, sm)
 			if err != nil {
 				log.Printf("Unable to stat %q: %v", path.Join(fullName, ent.Name()), err)
 				continue
@@ -58,8 +75,14 @@ func walkFs(name, fullName string, stat os.FileInfo) (tree *Tree, err error) {
 				Atts: getAtts(path.Join(fullName, ent.Name()), ent),
 			}
 			tree.Files = append(tree.Files, node)
+			sm.files++
+			sm.bytes += getSize(node.Atts)
 		}
 	}
+
+	sm.dirs++
+	fmt.Fprintf(sm.meter, "scan: %d dirs %d files, %s bytes\n", sm.dirs, sm.files,
+		humanize(uint64(sm.bytes)))
 
 	return
 }
@@ -164,6 +187,16 @@ func basePerms(atts *BaseAtts, sys *syscall.Stat_t) {
 // The Permission() call in 'os' masks off too many bits.
 func permission(sys *syscall.Stat_t) uint32 {
 	return uint32(sys.Mode &^ syscall.S_IFMT)
+}
+
+// getSize returns the size for things that have a size.
+func getSize(atts AttMap) int64 {
+	ra, ok := atts.(*RegAtts)
+	if ok {
+		return ra.Size
+	}
+
+	return 0
 }
 
 // For sorting by name

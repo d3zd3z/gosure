@@ -6,7 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"davidb.org/x/gosure/status"
 	"davidb.org/x/gosure/store"
 	"davidb.org/x/gosure/sure"
 )
@@ -23,12 +25,15 @@ func TestUnreadableFile(t *testing.T) {
 	// Create a single file, and make it unreadable.
 	makeUnreadableFile(t, tdir)
 
-	tree, err := sure.ScanFs(tdir)
+	sta := status.NewManager()
+	meter := sta.Meter(250 * time.Millisecond)
+	tree, err := sure.ScanFs(tdir, meter)
+	meter.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hashUpdate(tree, tdir)
+	hashUpdate(tree, tdir, sta)
 
 	var st store.Store
 	err = st.Parse(filepath.Join(tdir, "2sure.dat.gz"))
