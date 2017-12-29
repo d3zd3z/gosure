@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
+	"syscall"
 	"testing"
 
 	"davidb.org/x/gosure/sure"
@@ -81,7 +82,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 		&sure.File{
 			Name: "A fifo",
 			Atts: &sure.FifoAtts{
-				Kind: sure.S_IFIFO,
+				Kind: syscall.S_IFIFO,
 				BaseAtts: sure.BaseAtts{
 					Uid:  52,
 					Gid:  74,
@@ -92,7 +93,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 		&sure.File{
 			Name: "A socket",
 			Atts: &sure.FifoAtts{
-				Kind: sure.S_IFSOCK,
+				Kind: syscall.S_IFSOCK,
 				BaseAtts: sure.BaseAtts{
 					Uid:  7194783,
 					Gid:  719648,
@@ -103,7 +104,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 		&sure.File{
 			Name: "A block file",
 			Atts: &sure.DevAtts{
-				Kind: sure.S_IFBLK,
+				Kind: syscall.S_IFBLK,
 				BaseAtts: sure.BaseAtts{
 					Uid:  174872,
 					Gid:  9174863,
@@ -115,7 +116,7 @@ var tdata1 *sure.Tree = &sure.Tree{
 		&sure.File{
 			Name: "A character file",
 			Atts: &sure.DevAtts{
-				Kind: sure.S_IFCHR,
+				Kind: syscall.S_IFCHR,
 				BaseAtts: sure.BaseAtts{
 					Uid:  9817497,
 					Gid:  7196487,

@@ -4,17 +4,6 @@ import (
 	"syscall"
 )
 
-// The file kinds are imported directly from syscall.
-const (
-	S_IFDIR  = syscall.S_IFDIR
-	S_IFREG  = syscall.S_IFREG
-	S_IFLNK  = syscall.S_IFLNK
-	S_IFIFO  = syscall.S_IFIFO
-	S_IFSOCK = syscall.S_IFSOCK
-	S_IFCHR  = syscall.S_IFCHR
-	S_IFBLK  = syscall.S_IFBLK
-)
-
 // BaseAtts are attributes associated with all most types.
 type BaseAtts struct {
 	Uid  uint32
@@ -53,7 +42,7 @@ type FifoAtts struct {
 }
 
 func (a *FifoAtts) GetKind() string {
-	if a.Kind == S_IFIFO {
+	if a.Kind == syscall.S_IFIFO {
 		return "fifo"
 	} else {
 		return "sock"
@@ -68,7 +57,7 @@ type DevAtts struct {
 }
 
 func (a *DevAtts) GetKind() string {
-	if a.Kind == S_IFBLK {
+	if a.Kind == syscall.S_IFBLK {
 		return "blk"
 	} else {
 		return "chr"

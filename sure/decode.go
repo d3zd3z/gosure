@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 // Decode loads a surefile from an io.Reader.
@@ -335,13 +336,13 @@ func decWalk(v reflect.Value, atts map[string]string) error {
 
 // A mapping between kind names and the integer codes for them.
 var allKinds = map[string]uint32{
-	"dir":  S_IFDIR,
-	"file": S_IFREG,
-	"lnk":  S_IFLNK,
-	"fifo": S_IFIFO,
-	"sock": S_IFSOCK,
-	"chr":  S_IFCHR,
-	"blk":  S_IFBLK,
+	"dir":  syscall.S_IFDIR,
+	"file": syscall.S_IFREG,
+	"lnk":  syscall.S_IFLNK,
+	"fifo": syscall.S_IFIFO,
+	"sock": syscall.S_IFSOCK,
+	"chr":  syscall.S_IFCHR,
+	"blk":  syscall.S_IFBLK,
 }
 
 // A mapping between the kind names and the structure type used to

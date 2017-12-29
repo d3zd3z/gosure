@@ -3,6 +3,7 @@ package sure
 import (
 	"bytes"
 	"math/rand"
+	"syscall"
 )
 
 // For regular file attributes, generate values and SHA1 that are
@@ -49,9 +50,9 @@ func generateLinkAtts(rand *rand.Rand) AttMap {
 
 func generateFifoAtts(rand *rand.Rand) AttMap {
 	var a FifoAtts
-	a.Kind = S_IFIFO
+	a.Kind = syscall.S_IFIFO
 	if rand.Intn(2) == 0 {
-		a.Kind = S_IFSOCK
+		a.Kind = syscall.S_IFSOCK
 	}
 	a.Uid = rand.Uint32()
 	a.Gid = rand.Uint32()
@@ -62,9 +63,9 @@ func generateFifoAtts(rand *rand.Rand) AttMap {
 
 func generateDevAtts(rand *rand.Rand) AttMap {
 	var a DevAtts
-	a.Kind = S_IFBLK
+	a.Kind = syscall.S_IFBLK
 	if rand.Intn(2) == 0 {
-		a.Kind = S_IFCHR
+		a.Kind = syscall.S_IFCHR
 	}
 	a.Uid = rand.Uint32()
 	a.Gid = rand.Uint32()

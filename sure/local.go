@@ -124,16 +124,16 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		}
 		atts = lnkAtts
 	case syscall.S_IFIFO:
-		fifoAtts := &FifoAtts{Kind: S_IFIFO}
+		fifoAtts := &FifoAtts{Kind: syscall.S_IFIFO}
 		basePerms(&fifoAtts.BaseAtts, sys)
 		atts = fifoAtts
 	case syscall.S_IFSOCK:
-		fifoAtts := &FifoAtts{Kind: S_IFSOCK}
+		fifoAtts := &FifoAtts{Kind: syscall.S_IFSOCK}
 		basePerms(&fifoAtts.BaseAtts, sys)
 		atts = fifoAtts
 	case syscall.S_IFCHR:
 		devAtts := &DevAtts{
-			Kind: S_IFCHR,
+			Kind: syscall.S_IFCHR,
 			Rdev: uint64(sys.Rdev),
 		}
 		basePerms(&devAtts.BaseAtts, sys)
@@ -141,7 +141,7 @@ func getAtts(name string, info os.FileInfo) AttMap {
 		// TODO: These should have time info on them?
 	case syscall.S_IFBLK:
 		devAtts := &DevAtts{
-			Kind: S_IFBLK,
+			Kind: syscall.S_IFBLK,
 			Rdev: uint64(sys.Rdev),
 		}
 		basePerms(&devAtts.BaseAtts, sys)
