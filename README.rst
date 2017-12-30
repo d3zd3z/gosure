@@ -56,10 +56,22 @@ Gosure is written in Go_.
 
 .. _Go: https://golang.org/
 
-It is generally best to work with Go using its idea of a workspace.
-You should create a directory somewhere for go work, and set the
-environment variable ``GOPATH`` to point to this.  Once this is done,
-use the go tools to fetch this project::
+There are two ways to build gosure.  You can just build it,
+standalone::
+
+    $ git clone https://github.com/d3zd3z/gosure
+    $ cd gosure
+    $ go run build.go
+    $ cp gosure ~/bin
+
+This will build a version with the release tag information embedded in
+the executable.
+
+If you want to do any work on the code, it is generally best to work
+with Go using its idea of a workspace.  You should create a directory
+somewhere for go work, and set the environment variable ``GOPATH`` to
+point to this.  Once this is done, use the go tools to fetch this
+project::
 
     $ go get davidb.org/x/gosure
 
