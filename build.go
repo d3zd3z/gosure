@@ -54,9 +54,9 @@ var config = struct {
 	Main      string
 	Tests     []string
 }{
-	Name:      "gosure",              // name of the program executable and directory
-	Namespace: "davidb.org/x/gosure", // subdir of GOPATH, e.g. "github.com/foo/bar"
-	Main:      "davidb.org/x/gosure", // package name for the main package
+	Name:      "gosure",                         // name of the program executable and directory
+	Namespace: "davidb.org/x/gosure",            // subdir of GOPATH, e.g. "github.com/foo/bar"
+	Main:      "davidb.org/x/gosure/cmd/gosure", // package name for the main package
 	Tests: []string{ // tests to run
 		"davidb.org/x/gosure/...",
 	},
