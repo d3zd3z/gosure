@@ -9,11 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var checkRev int
+
 func doCheck(cmd *cobra.Command, args []string) {
 	st := status.NewManager()
 	defer st.Close()
 
-	oldTree, err := storeArg.ReadDat()
+	oldTree, err := storeArg.ReadDelta(checkRev)
 	if err != nil {
 		log.Fatal(err)
 	}

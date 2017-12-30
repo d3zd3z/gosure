@@ -72,6 +72,7 @@ func main() {
 
 	pf = check.PersistentFlags()
 	pf.StringVarP(&scanDir, "dir", "d", ".", "Directory to scan")
+	pf.IntVarP(&checkRev, "rev", "r", -1, "Revision to check")
 
 	root.AddCommand(check)
 
