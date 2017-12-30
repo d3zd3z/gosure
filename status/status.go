@@ -90,7 +90,7 @@ func (m *Manager) Meter(delay time.Duration) *Meter {
 func (m *Manager) clear() error {
 	for _, ch := range m.meter {
 		if ch == '\n' {
-			_, err := os.Stdout.Write([]byte("\x1b[A\x1b[K"))
+			_, err := os.Stdout.WriteString("\x1b[1A\x1b[2K")
 			if err != nil {
 				return err
 			}
@@ -110,32 +110,32 @@ func (m *Manager) redraw() error {
 // with '\n'.  The lines should be short enough to not wrap the user's
 // terminal.  If other writes are interleaved, this text will be
 // cleared, and rewritten after that other text is printed.
-func (me Meter) Write(p []byte) (n int, err error) {
+func (me *Meter) Write(p []byte) (n int, err error) {
 	me.m.lock.Lock()
 	defer me.m.lock.Unlock()
 
-	err = me.m.clear()
-	if err != nil {
-		return
-	}
-
 	// Make a copy of the meter, so we don't worry about it
 	// changing by the user.
-	if p == nil {
-		me.m.meter = nil
-	} else {
-		meter := make([]byte, len(p))
-		copy(meter, p)
-		me.m.meter = meter
+	var newMeter []byte
+	if p != nil {
+		newMeter = make([]byte, len(p))
+		copy(newMeter, p)
 	}
 
 	now := time.Now()
 	if now.Before(me.next) {
+		me.m.meter = newMeter
 		// Not enough time, don't show the meter.
 		return len(p), nil
 	}
 
 	me.next = now.Add(me.delay)
+
+	err = me.m.clear()
+	if err != nil {
+		return
+	}
+	me.m.meter = newMeter
 
 	// The return isn't quite right here, but I'm not sure we're
 	// going to handle errors writing to Stdout anyway.
@@ -143,7 +143,7 @@ func (me Meter) Write(p []byte) (n int, err error) {
 }
 
 // Flush the meter.
-func (me Meter) Flush() error {
+func (me *Meter) Flush() error {
 	me.m.lock.Lock()
 	defer me.m.lock.Unlock()
 
@@ -157,7 +157,7 @@ func (me Meter) Flush() error {
 
 // Close finishes the progress meter.  Its output is flushed, and new
 // printing will occur after the meter.
-func (me Meter) Close() error {
+func (me *Meter) Close() error {
 	me.m.lock.Lock()
 	defer me.m.lock.Unlock()
 
