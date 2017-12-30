@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 
 	"davidb.org/x/gosure/store"
 	"github.com/spf13/cobra"
@@ -12,6 +13,8 @@ import (
 var scanDir string
 var storeArg store.Store
 var tags = store.NewTags(&storeArg)
+
+var version = "compiled manually"
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -80,8 +83,21 @@ func main() {
 
 	root.AddCommand(list)
 
+	version := &cobra.Command{
+		Use:   "version",
+		Short: "Show program version",
+		Run:   doVersion,
+	}
+
+	root.AddCommand(version)
+
 	if err := root.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
+}
+
+func doVersion(cmd *cobra.Command, args []string) {
+	fmt.Printf("gosure %s\nCompiled with %v on %v/%v\n",
+		version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
