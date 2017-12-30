@@ -5,6 +5,7 @@
 package status
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -58,6 +59,11 @@ func (m *Manager) Write(p []byte) (n int, err error) {
 	}
 
 	return n, err
+}
+
+// Printf convenience.
+func (m *Manager) Printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(m, format, a...)
 }
 
 // Close closes the meter.  The meter is left in place, and the
@@ -140,6 +146,11 @@ func (me *Meter) Write(p []byte) (n int, err error) {
 	// The return isn't quite right here, but I'm not sure we're
 	// going to handle errors writing to Stdout anyway.
 	return len(p), me.m.redraw()
+}
+
+// Printf for convenience.
+func (me *Meter) Printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(me, format, a...)
 }
 
 // Flush the meter.
