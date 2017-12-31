@@ -2,38 +2,19 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"davidb.org/x/gosure/status"
-	"davidb.org/x/gosure/sure"
+	"davidb.org/x/gosure/suredrive"
 
 	"github.com/spf13/cobra"
 )
 
 func doScan(cmd *cobra.Command, args []string) {
-	st := status.NewManager()
-	defer st.Close()
+	mgr := status.NewManager()
+	defer mgr.Close()
 
-	meter := st.Meter(250 * time.Millisecond)
-	tree, err := sure.ScanFs(scanDir, meter)
-	meter.Close()
+	err := suredrive.Scan(&storeArg, scanDir, mgr)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	hashUpdate(tree, scanDir, st)
-
-	err = storeArg.Write(tree)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func hashUpdate(tree *sure.Tree, dir string, st *status.Manager) {
-	est := tree.EstimateHashes()
-	meter := st.Meter(250 * time.Millisecond)
-	prog := sure.NewProgress(est.Files, est.Bytes, meter)
-	prog.Flush()
-	tree.ComputeHashes(&prog, dir)
-	meter.Close()
 }

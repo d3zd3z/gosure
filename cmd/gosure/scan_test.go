@@ -6,11 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"davidb.org/x/gosure/status"
 	"davidb.org/x/gosure/store"
-	"davidb.org/x/gosure/sure"
+	"davidb.org/x/gosure/suredrive"
 )
 
 // Verify that we "gracefully" handle a snapshot when files are
@@ -25,23 +24,16 @@ func TestUnreadableFile(t *testing.T) {
 	// Create a single file, and make it unreadable.
 	makeUnreadableFile(t, tdir)
 
-	sta := status.NewManager()
-	meter := sta.Meter(250 * time.Millisecond)
-	tree, err := sure.ScanFs(tdir, meter)
-	meter.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	hashUpdate(tree, tdir, sta)
-
 	var st store.Store
 	err = st.Parse(filepath.Join(tdir, "2sure.dat.gz"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = st.Write(tree)
+	mgr := status.NewManager()
+	defer mgr.Close()
+
+	err = suredrive.Scan(&st, tdir, mgr)
 	if err != nil {
 		t.Fatal(err)
 	}
