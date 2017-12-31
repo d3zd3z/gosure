@@ -3,6 +3,7 @@
 package sha
 
 import (
+	"crypto/sha1"
 	"io"
 )
 
@@ -13,7 +14,7 @@ import (
 // On some platforms (notably Linux), this will try to not update the
 // atime on the file, so that it is still useful.
 func HashFile(path string) (result []byte, err error) {
-	hash := newSha1()
+	hash := sha1.New()
 	file, err := openNoAtime(path)
 	if err != nil {
 		return
@@ -33,10 +34,10 @@ func HashFile(path string) (result []byte, err error) {
 			return
 		}
 
-		hash.update(buffer[0:n])
+		_, _ = hash.Write(buffer[0:n])
 	}
 	putBuffer(buffer)
-	result = hash.final()
+	result = hash.Sum(nil)
 	return
 }
 
