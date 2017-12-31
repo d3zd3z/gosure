@@ -15,7 +15,7 @@ import (
 func TestFile(t *testing.T) {
 	// To make things predictable, make a file with known
 	// contents.
-	name, err := genFile(256 * 1024)
+	name, err := genFile(256*1024 + 1765)
 	if err != nil {
 		t.Fatal(err)
 	}
