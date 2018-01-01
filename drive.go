@@ -1,9 +1,10 @@
 // Package suredrive implements higher-level wrappers around the various
 // gosure libraries, making it easier both for a command-line tool, as
 // well as other tools to perform the integrity scans.
-package suredrive
+package gosure // import "davidb.org/x/gosure"
 
 import (
+	"encoding/gob"
 	"log"
 	"time"
 
@@ -37,6 +38,15 @@ func Scan(st *store.Store, dir string, mgr *status.Manager) error {
 	}
 
 	return nil
+}
+
+func init() {
+	// Need to register the types to gob for it to output.
+	gob.Register((*sure.DirAtts)(nil))
+	gob.Register((*sure.RegAtts)(nil))
+	gob.Register((*sure.LinkAtts)(nil))
+	gob.Register((*sure.FifoAtts)(nil))
+	gob.Register((*sure.DevAtts)(nil))
 }
 
 // HashUpdate updates the hashes of any files that are needed.

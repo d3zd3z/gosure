@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"davidb.org/x/gosure"
 	"davidb.org/x/gosure/status"
 	"davidb.org/x/gosure/store"
-	"davidb.org/x/gosure/suredrive"
 )
 
 // Verify that we "gracefully" handle a snapshot when files are
@@ -33,7 +33,7 @@ func TestUnreadableFile(t *testing.T) {
 	mgr := status.NewManager()
 	defer mgr.Close()
 
-	err = suredrive.Scan(&st, tdir, mgr)
+	err = gosure.Scan(&st, tdir, mgr)
 	if err != nil {
 		t.Fatal(err)
 	}
